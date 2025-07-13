@@ -1,7 +1,9 @@
 import { ethers } from 'hardhat';
 
 async function main() {
-	console.log('🚀 Starting Prediction Market deployment...\n');
+	console.log(
+		'🚀 Starting Prediction Market & Token Launchpad deployment...\n'
+	);
 
 	// Get the deployer account
 	const [deployer] = await ethers.getSigners();
@@ -19,32 +21,48 @@ async function main() {
 	);
 
 	// Deploy without constructor arguments (based on current contract)
-	const factory = await PredictionMarketFactory.deploy();
-	await factory.waitForDeployment();
+	const predictionFactory = await PredictionMarketFactory.deploy();
+	await predictionFactory.waitForDeployment();
 
 	// Get the contract address
-	const factoryAddress = await factory.getAddress();
-	console.log('✅ PredictionMarketFactory deployed to:', factoryAddress);
+	const predictionFactoryAddress = await predictionFactory.getAddress();
+	console.log(
+		'✅ PredictionMarketFactory deployed to:',
+		predictionFactoryAddress
+	);
+
+	// Deploy TokenLaunchpadFactory
+	console.log('\n📦 Deploying TokenLaunchpadFactory...');
+	const TokenLaunchpadFactory = await ethers.getContractFactory(
+		'TokenLaunchpadFactory'
+	);
+
+	const launchpadFactory = await TokenLaunchpadFactory.deploy();
+	await launchpadFactory.waitForDeployment();
+
+	const launchpadFactoryAddress = await launchpadFactory.getAddress();
+	console.log('✅ TokenLaunchpadFactory deployed to:', launchpadFactoryAddress);
 
 	console.log('\n📋 Contract Details:');
-	console.log('- Factory Address:', factoryAddress);
-	console.log('- Contract deployed successfully');
+	console.log('- PredictionMarketFactory Address:', predictionFactoryAddress);
+	console.log('- TokenLaunchpadFactory Address:', launchpadFactoryAddress);
+	console.log('- Contracts deployed successfully');
 
 	console.log('\n🎯 Deployment Summary:');
 	console.log(
 		'✅ PredictionMarketFactory is ready to create prediction markets!'
 	);
-	console.log(
-		'✅ Use the factory to deploy individual PredictionMarket contracts'
-	);
-	console.log('✅ Frontend can now interact with factory at:', factoryAddress);
+	console.log('✅ TokenLaunchpadFactory is ready to create token launches!');
+	console.log('✅ Use the factories to deploy individual contracts');
+	console.log('✅ Frontend can now interact with factories');
 
 	// Save deployment info to a file for frontend integration
 	const network = await ethers.provider.getNetwork();
 	const deploymentInfo = {
 		network: network.name,
 		chainId: Number(network.chainId),
-		factoryAddress: factoryAddress,
+		predictionFactoryAddress: predictionFactoryAddress,
+		launchpadFactoryAddress: launchpadFactoryAddress,
 		deployer: deployer.address,
 		deployedAt: new Date().toISOString(),
 	};

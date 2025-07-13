@@ -66,6 +66,7 @@ interface Transaction {
 
 interface SingleTokenPageProps {
 	tokenId?: string;
+	tokenAddress?: string;
 	onBack?: () => void;
 }
 
@@ -161,7 +162,10 @@ const MOCK_TRANSACTIONS: Transaction[] = [
 	},
 ];
 
-export function SingleTokenPage({ onBack }: SingleTokenPageProps) {
+export function SingleTokenPage({
+	tokenAddress,
+	onBack,
+}: SingleTokenPageProps) {
 	const [token] = useState<TokenLaunch>(DETAILED_TOKEN);
 	const [transactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
 	const [buyAmount, setBuyAmount] = useState('');

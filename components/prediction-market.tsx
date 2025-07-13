@@ -162,25 +162,6 @@ export function PredictionMarket() {
 					<Button onClick={() => refetchMarkets()} variant='neutral' size='sm'>
 						🔄 Refresh Markets
 					</Button>
-					<Button
-						onClick={async () => {
-							try {
-								console.log('Testing contract call...');
-								const result = await refetchMarkets();
-								console.log('Contract call result:', result);
-								toast.success(
-									'Contract test successful! Check console for details.'
-								);
-							} catch (error) {
-								console.error('Contract test failed:', error);
-								toast.error('Contract test failed! Check console for details.');
-							}
-						}}
-						variant='neutral'
-						size='sm'
-					>
-						🧪 Test Contract
-					</Button>
 					<Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
 						<DialogTrigger asChild>
 							<Button className='bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'>
@@ -299,10 +280,23 @@ export function PredictionMarket() {
 						</button>
 					</div>
 					<div>📊 Total Markets: {marketAddresses.length}</div>
+					<div>🌐 Network: Umi Devnet (Chain ID: {chainId})</div>
+					<div>🔗 RPC: https://devnet.uminetwork.com</div>
 					{marketsLoading && <div>🔄 Loading markets...</div>}
 					{marketsError && (
-						<div className='text-red-600 dark:text-red-400'>
-							❌ Error loading markets: {marketsError.message}
+						<div className='text-red-600 dark:text-red-400 space-y-1'>
+							<div>❌ Error loading markets:</div>
+							<div className='text-xs font-mono bg-red-50 dark:bg-red-950 p-2 rounded'>
+								{marketsError.message}
+							</div>
+							<div className='text-xs'>
+								💡 This might indicate:
+								<ul className='ml-4 mt-1'>
+									<li>• RPC endpoint is down or unreachable</li>
+									<li>• Contract not deployed at this address</li>
+									<li>• Network connectivity issues</li>
+								</ul>
+							</div>
 						</div>
 					)}
 					{marketAddresses.length > 0 && (

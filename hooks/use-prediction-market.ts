@@ -137,15 +137,6 @@ export function usePredictionMarketFactory() {
 		},
 	});
 
-	// Debug logging
-	console.log('Factory Debug:', {
-		chainId,
-		factoryAddress,
-		marketAddresses,
-		marketsError,
-		marketsLoading,
-	});
-
 	// Create a new market
 	const createMarket = async (
 		title: string,

@@ -12,8 +12,12 @@ export type ChainName =
 
 export type TokenName = 'MockUSDC' | 'MockWBTC' | 'MockWETH';
 export type VaultName = 'MultiTokenVault' | 'Vault';
-export type FactoryName = 'VaultFactory' | 'PredictionMarketFactory';
+export type FactoryName =
+	| 'VaultFactory'
+	| 'PredictionMarketFactory'
+	| 'TokenLaunchpadFactory';
 export type PredictionMarketName = 'PredictionMarketFactory';
+export type LaunchpadName = 'TokenLaunchpadFactory';
 export type PriceIdName = 'BTC_USD' | 'ETH_USD' | 'USDC_USD';
 
 export interface ChainConfig {
@@ -22,6 +26,7 @@ export interface ChainConfig {
 	vaults: Partial<Record<VaultName, string>>;
 	factories: Partial<Record<FactoryName, string>>;
 	predictionMarkets?: Partial<Record<PredictionMarketName, string>>;
+	launchpad?: Partial<Record<LaunchpadName, string>>;
 }
 
 export interface TokenConfig {
@@ -99,7 +104,10 @@ export const CONTRACTS_CONFIG = {
 			vaults: {},
 			factories: {},
 			predictionMarkets: {
-				PredictionMarketFactory: '0xe1026FBe2619381be1dEca44be7396eb985FB021',
+				PredictionMarketFactory: '0x44E0171B993CAFD6c3e732797dd7a6c872236dD6',
+			},
+			launchpad: {
+				TokenLaunchpadFactory: '0x31162e2edaEfBeE3C5281058c146Ef0884708072',
 			},
 		},
 	} as Record<ChainName, ChainConfig>,
@@ -376,4 +384,24 @@ export function getPredictionMarketFactoryAddressById(
 ): string | null {
 	const chainInfo = getChainConfigById(chainId);
 	return chainInfo?.config.predictionMarkets?.PredictionMarketFactory || null;
+}
+
+/**
+ * Get token launchpad factory address for a specific chain
+ */
+export function getTokenLaunchpadFactoryAddress(
+	chainName: ChainName
+): string | null {
+	const config = getChainConfig(chainName);
+	return config?.launchpad?.TokenLaunchpadFactory || null;
+}
+
+/**
+ * Get token launchpad factory address by chain ID
+ */
+export function getTokenLaunchpadFactoryAddressById(
+	chainId: number
+): string | null {
+	const chainInfo = getChainConfigById(chainId);
+	return chainInfo?.config.launchpad?.TokenLaunchpadFactory || null;
 }
