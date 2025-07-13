@@ -52,6 +52,7 @@ interface Trade {
 }
 
 interface SinglePredictionMarketProps {
+	marketAddress: string;
 	onBack?: () => void;
 }
 
@@ -232,7 +233,7 @@ export function SinglePredictionMarket({
 								<Badge variant='neutral'>📊 {market.category}</Badge>
 								{market.aiConfidence && (
 									<Badge className='bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'>
-										🤖 {market.aiConfidence}% AI Confidence
+										🔮 {market.aiConfidence}% Confidence
 									</Badge>
 								)}
 							</div>
@@ -286,7 +287,7 @@ export function SinglePredictionMarket({
 				<TabsList className='grid w-full grid-cols-4'>
 					<TabsTrigger value='trade'>Trade</TabsTrigger>
 					<TabsTrigger value='activity'>Activity</TabsTrigger>
-					<TabsTrigger value='analysis'>AI Analysis</TabsTrigger>
+					<TabsTrigger value='analysis'>Market Analysis</TabsTrigger>
 					<TabsTrigger value='rules'>Rules</TabsTrigger>
 				</TabsList>
 
@@ -527,11 +528,11 @@ export function SinglePredictionMarket({
 					</Card>
 				</TabsContent>
 
-				{/* AI Analysis Tab */}
+				{/* Market Analysis Tab */}
 				<TabsContent value='analysis' className='space-y-6'>
 					<Card>
 						<CardHeader>
-							<CardTitle>🤖 AI Market Analysis</CardTitle>
+							<CardTitle>🔮 Market Analysis</CardTitle>
 						</CardHeader>
 						<CardContent className='space-y-6'>
 							<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
@@ -586,7 +587,7 @@ export function SinglePredictionMarket({
 
 							<Alert className='bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-purple-200 dark:border-purple-800'>
 								<AlertDescription className='text-purple-700 dark:text-purple-300'>
-									🤖 AI analysis is updated every 4 hours based on market
+									🔮 Market analysis is updated every 4 hours based on market
 									sentiment, news, and technical indicators.
 								</AlertDescription>
 							</Alert>

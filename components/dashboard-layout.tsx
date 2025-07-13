@@ -1,21 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { VaultCard } from '@/components/vault-card';
 import { TransactionHistory } from '@/components/transaction-history';
 import { NavBar } from '@/components/nav-bar';
 import { UserPositions } from '@/components/user-positions';
-import { TokenFaucet } from '@/components/token-faucet';
-import { CreateVaultModal } from '@/components/create-vault-modal';
 import { PredictionMarket } from '@/components/prediction-market';
 import { TokenLaunchpad } from '@/components/token-launchpad';
 import { FeatureShowcase } from '@/components/feature-showcase';
+import { ComingSoon } from '@/components/coming-soon';
 import { getVaultAddress } from '@/constants/contracts';
-import { getVaults } from '@/lib/supabase';
 import { useChainId } from 'wagmi';
 
 interface VaultData {
@@ -28,19 +25,11 @@ interface VaultData {
 	apy: number;
 	tvl: number;
 	riskLevel: string;
-	aiStrategy: string;
+	strategy: string;
 	performance: number;
 	deposits: number;
 	allocation: Record<string, number>;
 	supportedTokens: string[];
-}
-
-interface SupabaseVault {
-	id: number;
-	vaultaddress: string;
-	blockchain: string;
-	nombre: string;
-	symbol: string;
 }
 
 // Real vault data based on deployed contracts
@@ -48,8 +37,7 @@ const REAL_VAULTS: VaultData[] = [
 	{
 		id: 'flow-testnet-multi-token-vault',
 		name: 'Flow Testnet Multi-Token Vault',
-		description:
-			'AI-powered USDC vault on Flow Testnet for optimized yield strategies',
+		description: 'Optimized yield strategies for USDC on Flow Testnet',
 		blockchain: 'Flow Testnet',
 		chainId: 545,
 		contractAddress:
@@ -58,7 +46,7 @@ const REAL_VAULTS: VaultData[] = [
 		apy: 16.5,
 		tvl: 450000,
 		riskLevel: 'High',
-		aiStrategy: 'AI-Powered USDC Yield Optimization',
+		strategy: 'USDC Yield Optimization',
 		performance: 13.2,
 		deposits: 320000,
 		allocation: {
@@ -70,7 +58,7 @@ const REAL_VAULTS: VaultData[] = [
 		id: 'rootstock-testnet-vault',
 		name: 'Rootstock Testnet Vault',
 		description:
-			'AI-powered USDC vault on Rootstock Testnet with Bitcoin DeFi integration',
+			'USDC vault on Rootstock Testnet with Bitcoin DeFi integration',
 		blockchain: 'Rootstock Testnet',
 		chainId: 31,
 		contractAddress:
@@ -79,7 +67,7 @@ const REAL_VAULTS: VaultData[] = [
 		apy: 18.2,
 		tvl: 750000,
 		riskLevel: 'Medium',
-		aiStrategy: 'Bitcoin-backed USDC Yield Optimization',
+		strategy: 'Bitcoin-backed USDC Yield Optimization',
 		performance: 15.1,
 		deposits: 580000,
 		allocation: {
@@ -92,17 +80,13 @@ const REAL_VAULTS: VaultData[] = [
 export function DashboardLayout() {
 	const [activeTab, setActiveTab] = useState('overview');
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-	const [isCreateVaultModalOpen, setIsCreateVaultModalOpen] = useState(false);
-	const [supabaseVaults, setSupabaseVaults] = useState<VaultData[]>([]);
-	const [isLoadingVaults, setIsLoadingVaults] = useState(true);
 	const [selectedVault, setSelectedVault] = useState<VaultData | null>(null);
 
 	// Get current chain ID to filter vaults and faucet
 	const currentChainId = useChainId();
 
-	// Combine hardcoded vaults with Supabase vaults and filter by current chain
-	const allVaults = [...REAL_VAULTS, ...supabaseVaults];
-	const filteredVaults = allVaults.filter(
+	// Filter vaults by current chain
+	const filteredVaults = REAL_VAULTS.filter(
 		(vault) => vault.chainId === currentChainId
 	);
 
@@ -118,77 +102,6 @@ export function DashboardLayout() {
 		}
 	}, [filteredVaults, selectedVault]);
 
-	// Map Supabase vault to VaultData format
-	const mapSupabaseVaultToVaultData = (vault: SupabaseVault): VaultData => {
-		// Get chain ID based on blockchain name
-		const getChainIdFromBlockchain = (blockchain: string): number => {
-			switch (blockchain.toLowerCase()) {
-				case 'flow testnet':
-				case 'flowTestnet':
-				case 'flowtestnet':
-					return 545;
-				case 'rootstock testnet':
-				case 'rootstockTestnet':
-				case 'rootstocktestnet':
-					return 31;
-				default:
-					return 1; // Default to mainnet
-			}
-		};
-
-		const chainId = getChainIdFromBlockchain(vault.blockchain);
-
-		return {
-			id: `supabase-${vault.id}`,
-			name: vault.nombre,
-			description: `AI-managed vault created by users on ${vault.blockchain}`,
-			blockchain: vault.blockchain,
-			chainId,
-			contractAddress: vault.vaultaddress,
-			apy: 12.5, // Default values for user-created vaults
-			tvl: 0, // Will be updated when we can read from contract
-			riskLevel: 'Medium',
-			aiStrategy: 'AI-Powered Multi-Asset Strategy',
-			performance: 8.7,
-			deposits: 0,
-			allocation: {
-				'USDC Strategies': 100, // Since all user vaults use USDC
-			},
-			supportedTokens: ['MockUSDC'], // All user vaults support USDC
-		};
-	};
-
-	const goToFaucet = () => {
-		setActiveTab('faucet');
-		setIsMobileMenuOpen(false);
-	};
-
-	// Load vaults from Supabase
-	const loadSupabaseVaults = useCallback(async () => {
-		try {
-			setIsLoadingVaults(true);
-			const vaults = await getVaults();
-			const mappedVaults = vaults.map(mapSupabaseVaultToVaultData);
-			setSupabaseVaults(mappedVaults);
-		} catch (error) {
-			console.error('Error loading vaults from Supabase:', error);
-		} finally {
-			setIsLoadingVaults(false);
-		}
-	}, []);
-
-	// Load vaults on component mount
-	useEffect(() => {
-		loadSupabaseVaults();
-	}, [loadSupabaseVaults]);
-
-	// Reload vaults when modal closes (in case a new vault was created)
-	useEffect(() => {
-		if (!isCreateVaultModalOpen) {
-			loadSupabaseVaults();
-		}
-	}, [isCreateVaultModalOpen, loadSupabaseVaults]);
-
 	return (
 		<div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950'>
 			<div className='flex flex-col lg:flex-row'>
@@ -197,14 +110,14 @@ export function DashboardLayout() {
 					<div className='flex items-center justify-between p-4 border-b border-slate-200/60 dark:border-slate-800/60 bg-white/95 dark:bg-slate-950/95'>
 						<div className='flex items-center gap-3'>
 							<div className='w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center'>
-								<span className='text-white font-bold text-sm'>AI</span>
+								<span className='text-white font-bold text-sm'>UMI</span>
 							</div>
 							<div>
 								<h1 className='font-bold text-lg text-slate-900 dark:text-white'>
-									DEFAI
+									UmiFi
 								</h1>
 								<p className='text-xs text-slate-500 dark:text-slate-400'>
-									AI Predictions & Launches
+									Umi Superapp
 								</p>
 							</div>
 						</div>
@@ -272,16 +185,6 @@ export function DashboardLayout() {
 								>
 									💼 Portfolio
 								</Button>
-								<Button
-									variant={activeTab === 'faucet' ? 'default' : 'neutral'}
-									className='text-xs'
-									onClick={() => {
-										setActiveTab('faucet');
-										setIsMobileMenuOpen(false);
-									}}
-								>
-									🚰 Faucet
-								</Button>
 							</nav>
 
 							<div className='grid grid-cols-1 gap-2'>
@@ -289,7 +192,6 @@ export function DashboardLayout() {
 									size='sm'
 									className='bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-xs'
 									onClick={() => {
-										setIsCreateVaultModalOpen(true);
 										setIsMobileMenuOpen(false);
 									}}
 								>
@@ -309,18 +211,18 @@ export function DashboardLayout() {
 				</div>
 
 				{/* Desktop Sidebar */}
-				<div className='hidden lg:block w-80 flex-shrink-0 border-r border-slate-200/60 dark:border-slate-800/60 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm'>
-					<div className='p-6 h-screen overflow-y-auto'>
+				<div className='hidden lg:block w-80 flex-shrink-0 border-r border-slate-200/60 dark:border-slate-800/60 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm fixed left-0 top-0 h-screen z-40'>
+					<div className='p-6 h-full overflow-y-auto'>
 						<div className='flex items-center gap-3 mb-8'>
 							<div className='w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center'>
-								<span className='text-white font-bold text-lg'>AI</span>
+								<span className='text-white font-bold text-lg'>UMI</span>
 							</div>
 							<div>
 								<h1 className='font-bold text-xl text-slate-900 dark:text-white'>
-									DEFAI
+									UmiFi
 								</h1>
 								<p className='text-sm text-slate-500 dark:text-slate-400'>
-									AI Predictions & Launches
+									Umi Superapp
 								</p>
 							</div>
 						</div>
@@ -361,20 +263,13 @@ export function DashboardLayout() {
 							>
 								💼 Portfolio
 							</Button>
-							<Button
-								variant={activeTab === 'faucet' ? 'default' : 'neutral'}
-								className='w-full justify-start'
-								onClick={() => setActiveTab('faucet')}
-							>
-								🚰 Faucet
-							</Button>
 						</nav>
 
 						<div className='mt-8'>
 							<Alert className='bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950 dark:to-green-950 border-emerald-200 dark:border-emerald-800'>
 								<AlertDescription className='text-emerald-700 dark:text-emerald-300 text-sm'>
-									🤖 AI is actively optimizing your portfolio. Next rebalance in
-									2h 15m.
+									🚀 Platform is actively optimizing your experience. New
+									features coming soon!
 								</AlertDescription>
 							</Alert>
 						</div>
@@ -382,7 +277,7 @@ export function DashboardLayout() {
 				</div>
 
 				{/* Main Content */}
-				<div className='flex-1 flex flex-col min-h-screen'>
+				<div className='flex-1 flex flex-col min-h-screen lg:ml-80'>
 					{/* Global NavBar for floating wallet/network info */}
 					<NavBar />
 
@@ -403,61 +298,12 @@ export function DashboardLayout() {
 								value='vaults'
 								className='space-y-4 lg:space-y-6 mt-0 pb-20'
 							>
-								<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-									<div>
-										<h2 className='text-xl lg:text-2xl font-bold text-slate-900 dark:text-white'>
-											AI-Managed Vaults
-										</h2>
-										<p className='text-sm lg:text-base text-slate-600 dark:text-slate-400'>
-											Discover and invest in algorithmic trading strategies on{' '}
-											{currentChainId === 545
-												? 'Flow Testnet'
-												: currentChainId === 31
-												? 'Rootstock Testnet'
-												: 'your current network'}
-										</p>
-									</div>
-									<Button
-										size='sm'
-										className='bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 w-full sm:w-auto'
-										onClick={() => setIsCreateVaultModalOpen(true)}
-									>
-										🚀 Create New Vault
-									</Button>
-								</div>
-
-								{!isLoadingVaults && filteredVaults.length === 0 ? (
-									<div className='text-center py-12'>
-										<Alert className='border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950 max-w-lg mx-auto'>
-											<AlertDescription className='text-yellow-700 dark:text-yellow-300'>
-												<div className='flex flex-col items-center gap-3'>
-													<span className='text-3xl'>🚀</span>
-													<div>
-														<strong>No vaults found on this network</strong>
-														<p className='mt-1 text-sm'>
-															Switch to Flow Testnet or Rootstock Testnet to
-															discover existing vaults, or be the first to
-															create a vault on your current network!
-														</p>
-													</div>
-												</div>
-											</AlertDescription>
-										</Alert>
-									</div>
-								) : (
-									<div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6'>
-										{filteredVaults.map((vault) => (
-											<VaultCard
-												goToFaucet={goToFaucet}
-												key={vault.id}
-												vault={vault}
-												onSelect={() => setSelectedVault(vault)}
-												isSelected={selectedVault?.id === vault.id}
-												showFullDetails
-											/>
-										))}
-									</div>
-								)}
+								<ComingSoon
+									title='🏦 Vaults & Pools'
+									description='Advanced DeFi vaults and liquidity pools'
+									icon='🏦'
+									featureName='Vaults and Pools'
+								/>
 							</TabsContent>
 
 							<TabsContent
@@ -481,22 +327,12 @@ export function DashboardLayout() {
 											</CardHeader>
 											<CardContent>
 												<div className='space-y-4'>
-													{filteredVaults.map((vault) => (
-														<div
-															key={vault.id}
-															className='flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800'
-														>
-															<div className='flex items-center gap-3'>
-																<div className='w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500'></div>
-																<span className='text-sm font-medium'>
-																	{vault.name.split(' ')[0]}
-																</span>
-															</div>
-															<span className='text-sm text-slate-600 dark:text-slate-400'>
-																${vault.deposits.toLocaleString()}
-															</span>
-														</div>
-													))}
+													<div className='text-center py-8'>
+														<div className='text-4xl mb-2'>📊</div>
+														<p className='text-slate-600 dark:text-slate-400 text-sm'>
+															Portfolio data coming soon
+														</p>
+													</div>
 												</div>
 											</CardContent>
 										</Card>
@@ -539,13 +375,6 @@ export function DashboardLayout() {
 							</TabsContent>
 
 							<TabsContent
-								value='faucet'
-								className='space-y-4 lg:space-y-6 mt-0 pb-20'
-							>
-								<TokenFaucet />
-							</TabsContent>
-
-							<TabsContent
 								value='predictions'
 								className='space-y-4 lg:space-y-6 mt-0 pb-20'
 							>
@@ -562,12 +391,6 @@ export function DashboardLayout() {
 					</main>
 				</div>
 			</div>
-
-			{/* Create Vault Modal */}
-			<CreateVaultModal
-				isOpen={isCreateVaultModalOpen}
-				onOpenChange={setIsCreateVaultModalOpen}
-			/>
 		</div>
 	);
 }

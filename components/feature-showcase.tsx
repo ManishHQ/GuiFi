@@ -52,7 +52,7 @@ interface FeatureShowcaseProps {
 export function FeatureShowcase({ onNavigate }: FeatureShowcaseProps) {
 	const features = [
 		{
-			title: 'AI Vaults',
+			title: 'Vaults',
 			description:
 				'Deploy and manage AI-powered DeFi vaults with automated yield optimization strategies.',
 			icon: '🏦',
@@ -97,11 +97,11 @@ export function FeatureShowcase({ onNavigate }: FeatureShowcaseProps) {
 					<span className='text-white font-bold text-3xl'>AI</span>
 				</div>
 				<h1 className='text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white'>
-					Welcome to DEFAI
+					Welcome to UmiFi
 				</h1>
 				<p className='text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto'>
-					The next generation of DeFi powered by artificial intelligence. Trade,
-					predict, and launch with confidence.
+					The super app, powered by Umi Chain. Trade, predict, and launch with
+					confidence.
 				</p>
 			</div>
 

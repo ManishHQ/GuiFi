@@ -36,12 +36,12 @@ interface TokenLaunch {
 	website?: string;
 	twitter?: string;
 	telegram?: string;
-	aiScore?: number;
+	marketScore?: number;
 	priceChange24h?: number;
 	volume24h?: number;
 	holders?: number;
 	contractAddress?: string;
-	aiAnalysis?: {
+	marketAnalysis?: {
 		sentiment: 'bullish' | 'bearish' | 'neutral';
 		factors: string[];
 		riskLevel: 'low' | 'medium' | 'high';
@@ -90,12 +90,12 @@ const DETAILED_TOKEN: TokenLaunch = {
 	website: 'https://aipred.io',
 	twitter: '@aipredtoken',
 	telegram: 'aipredcommunity',
-	aiScore: 92,
+	marketScore: 92,
 	priceChange24h: 15.7,
 	volume24h: 234567,
 	holders: 1247,
 	contractAddress: '0x742d35Cc6634C0532925a3b8D697D5f9E65A51f0',
-	aiAnalysis: {
+	marketAnalysis: {
 		sentiment: 'bullish',
 		factors: [
 			'Strong community growth (+45% this week)',
@@ -277,9 +277,9 @@ export function SingleTokenPage({ onBack }: SingleTokenPageProps) {
 										${token.symbol}
 									</span>
 									<Badge variant='neutral'>📊 {token.category}</Badge>
-									{token.aiScore && (
+									{token.marketScore && (
 										<Badge className='bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'>
-											🤖 AI Score: {token.aiScore}/100
+											📊 Market Score: {token.marketScore}/100
 										</Badge>
 									)}
 								</div>
@@ -609,7 +609,7 @@ export function SingleTokenPage({ onBack }: SingleTokenPageProps) {
 						<CardContent className='space-y-6'>
 							<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
 								<div className='text-center p-4 bg-slate-50 dark:bg-slate-900 rounded-lg'>
-									<div className='text-2xl font-bold'>{token.aiScore}%</div>
+									<div className='text-2xl font-bold'>{token.marketScore}%</div>
 									<div className='text-sm text-slate-600 dark:text-slate-400'>
 										AI Score
 									</div>
@@ -617,10 +617,10 @@ export function SingleTokenPage({ onBack }: SingleTokenPageProps) {
 								<div className='text-center p-4 bg-slate-50 dark:bg-slate-900 rounded-lg'>
 									<div
 										className={`text-2xl font-bold capitalize ${getSentimentColor(
-											token.aiAnalysis?.sentiment || 'neutral'
+											token.marketAnalysis?.sentiment || 'neutral'
 										)}`}
 									>
-										{token.aiAnalysis?.sentiment}
+										{token.marketAnalysis?.sentiment}
 									</div>
 									<div className='text-sm text-slate-600 dark:text-slate-400'>
 										Sentiment
@@ -629,10 +629,10 @@ export function SingleTokenPage({ onBack }: SingleTokenPageProps) {
 								<div className='text-center p-4 bg-slate-50 dark:bg-slate-900 rounded-lg'>
 									<div
 										className={`text-2xl font-bold capitalize ${getRiskColor(
-											token.aiAnalysis?.riskLevel || 'medium'
+											token.marketAnalysis?.riskLevel || 'medium'
 										)}`}
 									>
-										{token.aiAnalysis?.riskLevel}
+										{token.marketAnalysis?.riskLevel}
 									</div>
 									<div className='text-sm text-slate-600 dark:text-slate-400'>
 										Risk Level
@@ -640,7 +640,7 @@ export function SingleTokenPage({ onBack }: SingleTokenPageProps) {
 								</div>
 								<div className='text-center p-4 bg-slate-50 dark:bg-slate-900 rounded-lg'>
 									<div className='text-2xl font-bold'>
-										{token.aiAnalysis?.technicalIndicators.rsi.toFixed(1)}
+										{token.marketAnalysis?.technicalIndicators.rsi.toFixed(1)}
 									</div>
 									<div className='text-sm text-slate-600 dark:text-slate-400'>
 										RSI
@@ -652,15 +652,17 @@ export function SingleTokenPage({ onBack }: SingleTokenPageProps) {
 								<div>
 									<h4 className='font-semibold mb-3'>Key Factors</h4>
 									<div className='space-y-2'>
-										{token.aiAnalysis?.factors.map((factor, index) => (
-											<div
-												key={index}
-												className='flex items-start gap-2 p-2 bg-slate-50 dark:bg-slate-900 rounded'
-											>
-												<span className='text-green-500 mt-0.5'>✓</span>
-												<span className='text-sm'>{factor}</span>
-											</div>
-										))}
+										{token.marketAnalysis?.factors.map(
+											(factor: string, index: number) => (
+												<div
+													key={index}
+													className='flex items-start gap-2 p-2 bg-slate-50 dark:bg-slate-900 rounded'
+												>
+													<span className='text-green-500 mt-0.5'>✓</span>
+													<span className='text-sm'>{factor}</span>
+												</div>
+											)
+										)}
 									</div>
 								</div>
 
@@ -671,20 +673,20 @@ export function SingleTokenPage({ onBack }: SingleTokenPageProps) {
 											<span className='text-sm'>MACD Signal</span>
 											<Badge
 												className={
-													token.aiAnalysis?.technicalIndicators.macd ===
+													token.marketAnalysis?.technicalIndicators.macd ===
 													'bullish'
 														? 'bg-green-100 text-green-800'
 														: 'bg-red-100 text-red-800'
 												}
 											>
-												{token.aiAnalysis?.technicalIndicators.macd}
+												{token.marketAnalysis?.technicalIndicators.macd}
 											</Badge>
 										</div>
 										<div className='flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-900 rounded'>
 											<span className='text-sm'>Support Level</span>
 											<span className='font-semibold'>
 												$
-												{token.aiAnalysis?.technicalIndicators.support.toFixed(
+												{token.marketAnalysis?.technicalIndicators.support.toFixed(
 													4
 												)}
 											</span>
@@ -693,7 +695,7 @@ export function SingleTokenPage({ onBack }: SingleTokenPageProps) {
 											<span className='text-sm'>Resistance Level</span>
 											<span className='font-semibold'>
 												$
-												{token.aiAnalysis?.technicalIndicators.resistance.toFixed(
+												{token.marketAnalysis?.technicalIndicators.resistance.toFixed(
 													4
 												)}
 											</span>

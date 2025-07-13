@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+// import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { WalletConnectModal } from '@/components/wallet-connect-modal';
 import { useWallet } from '@/contexts/wallet-context';
-import { useChainId, useSwitchChain } from 'wagmi';
+// import { useChainId, useSwitchChain } from 'wagmi';
 
 export function NavBar() {
 	const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 	const [showChainMenu, setShowChainMenu] = useState(false);
 	const wallet = useWallet();
-	const chainId = useChainId();
-	const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
+	// const chainId = useChainId();
+	// const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
 
 	// Close menu when clicking outside
 	useEffect(() => {
@@ -29,34 +29,34 @@ export function NavBar() {
 	}, [showChainMenu]);
 
 	// Map chain names to display names - only for supported chains
-	const getDisplayChainName = (chainId: number) => {
-		switch (chainId) {
-			case 545: // Flow Testnet
-				return 'Flow Testnet';
-			case 31: // Rootstock Testnet
-				return 'Rootstock Testnet';
-			default:
-				// If not a supported chain, suggest switching
-				return wallet.isConnected ? 'Switch Chain' : 'No Chain';
-		}
-	};
+	// const getDisplayChainName = (chainId: number) => {
+	// 	switch (chainId) {
+	// 		case 545: // Flow Testnet
+	// 			return 'Flow Testnet';
+	// 		case 31: // Rootstock Testnet
+	// 			return 'Rootstock Testnet';
+	// 		default:
+	// 			// If not a supported chain, suggest switching
+	// 			return wallet.isConnected ? 'Switch Chain' : 'No Chain';
+	// 	}
+	// };
 
-	const displayChainName = getDisplayChainName(chainId);
-	const shortChainName = displayChainName.includes('Testnet')
-		? displayChainName.replace(' Testnet', '')
-		: displayChainName.split(' ')[0];
+	// const displayChainName = getDisplayChainName(chainId);
+	// const shortChainName = displayChainName.includes('Testnet')
+	// 	? displayChainName.replace(' Testnet', '')
+	// 	: displayChainName.split(' ')[0];
 
-	const getNetworkColor = (chainId: number) => {
-		switch (chainId) {
-			case 545: // Flow Testnet
-				return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-			case 31: // Rootstock Testnet
-				return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-			default:
-				// Unsupported chain - show warning color
-				return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-		}
-	};
+	// const getNetworkColor = (chainId: number) => {
+	// 	switch (chainId) {
+	// 		case 545: // Flow Testnet
+	// 			return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+	// 		case 31: // Rootstock Testnet
+	// 			return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+	// 		default:
+	// 			// Unsupported chain - show warning color
+	// 			return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+	// 	}
+	// };
 
 	const formatAddress = (address: string) => {
 		return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -71,16 +71,16 @@ export function NavBar() {
 		return balance;
 	};
 
-	const isUnsupportedChain = chainId !== 545 && chainId !== 31;
+	// const isUnsupportedChain = chainId !== 545 && chainId !== 31;
 
-	const handleChainSwitch = async (targetChainId: number) => {
-		try {
-			await switchChain({ chainId: targetChainId });
-			setShowChainMenu(false);
-		} catch (error) {
-			console.error('Failed to switch chain:', error);
-		}
-	};
+	// const handleChainSwitch = async (targetChainId: number) => {
+	// 	try {
+	// 		await switchChain({ chainId: targetChainId });
+	// 		setShowChainMenu(false);
+	// 	} catch (error) {
+	// 		console.error('Failed to switch chain:', error);
+	// 	}
+	// };
 
 	return (
 		<>
@@ -128,7 +128,7 @@ export function NavBar() {
 				)}
 
 				{/* Network Selector - Floating (after wallet) */}
-				<div className='relative chain-menu-container'>
+				{/* <div className='relative chain-menu-container'>
 					<Badge
 						className={`${getNetworkColor(
 							chainId
@@ -190,7 +190,7 @@ export function NavBar() {
 							</div>
 						</div>
 					)}
-				</div>
+				</div> */}
 			</div>
 
 			{/* Wallet Connect Modal */}

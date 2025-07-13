@@ -37,7 +37,7 @@ interface TokenLaunch {
 	website?: string;
 	twitter?: string;
 	telegram?: string;
-	aiScore?: number;
+	marketScore?: number;
 	priceChange24h?: number;
 }
 
@@ -62,7 +62,7 @@ const MOCK_LAUNCHES: TokenLaunch[] = [
 		website: 'https://aipred.io',
 		twitter: '@aipredtoken',
 		telegram: 'aipredcommunity',
-		aiScore: 92,
+		marketScore: 92,
 		priceChange24h: 15.7,
 	},
 	{
@@ -83,7 +83,7 @@ const MOCK_LAUNCHES: TokenLaunch[] = [
 		category: 'DeFi',
 		website: 'https://definexus.fi',
 		twitter: '@definexus',
-		aiScore: 88,
+		marketScore: 88,
 		priceChange24h: -3.2,
 	},
 	{
@@ -104,7 +104,7 @@ const MOCK_LAUNCHES: TokenLaunch[] = [
 		category: 'Gaming',
 		website: 'https://gamefirev.com',
 		telegram: 'gamefirevolution',
-		aiScore: 76,
+		marketScore: 76,
 	},
 	{
 		id: '4',
@@ -124,7 +124,7 @@ const MOCK_LAUNCHES: TokenLaunch[] = [
 		category: 'Green Tech',
 		website: 'https://greenenergycoin.org',
 		twitter: '@greenenergycoin',
-		aiScore: 94,
+		marketScore: 94,
 		priceChange24h: 8.4,
 	},
 ];
@@ -217,7 +217,7 @@ export function TokenLaunchpad() {
 			website: newToken.website,
 			twitter: newToken.twitter,
 			telegram: newToken.telegram,
-			aiScore: Math.floor(Math.random() * 30) + 70, // Random AI score between 70-100
+			marketScore: Math.floor(Math.random() * 30) + 70, // Random market score between 70-100
 		};
 
 		setLaunches([token, ...launches]);
@@ -418,9 +418,9 @@ export function TokenLaunchpad() {
 									<Badge className={getStatusColor(launch.status)}>
 										{launch.status}
 									</Badge>
-									{launch.aiScore && (
+									{launch.marketScore && (
 										<div className='text-xs text-orange-600 dark:text-orange-400 mt-1'>
-											🤖 AI Score: {launch.aiScore}/100
+											📊 Market Score: {launch.marketScore}/100
 										</div>
 									)}
 								</div>
