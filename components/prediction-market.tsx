@@ -138,7 +138,7 @@ export function PredictionMarket() {
 							onClick={switchToDevnet}
 							className='bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white'
 						>
-							Switch to Umi Devnet
+							Switch to GUI Devnet
 						</Button>
 					</AlertDescription>
 				</Alert>
@@ -280,8 +280,8 @@ export function PredictionMarket() {
 						</button>
 					</div>
 					<div>📊 Total Markets: {marketAddresses.length}</div>
-					<div>🌐 Network: Umi Devnet (Chain ID: {chainId})</div>
-					<div>🔗 RPC: https://devnet.uminetwork.com</div>
+									<div>🌐 Network: GUI Devnet (Chain ID: {chainId})</div>
+				<div>🔗 RPC: https://devnet.uminetwork.com</div>
 					{marketsLoading && <div>🔄 Loading markets...</div>}
 					{marketsError && (
 						<div className='text-red-600 dark:text-red-400 space-y-1'>

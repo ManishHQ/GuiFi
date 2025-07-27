@@ -110,14 +110,14 @@ export function DashboardLayout() {
 					<div className='flex items-center justify-between p-4 border-b border-slate-200/60 dark:border-slate-800/60 bg-white/95 dark:bg-slate-950/95'>
 						<div className='flex items-center gap-3'>
 							<div className='w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center'>
-								<span className='text-white font-bold text-sm'>UMI</span>
+								<span className='text-white font-bold text-sm'>GUI</span>
 							</div>
 							<div>
 								<h1 className='font-bold text-lg text-slate-900 dark:text-white'>
-									UmiFi
+									GuiVerse
 								</h1>
 								<p className='text-xs text-slate-500 dark:text-slate-400'>
-									Umi Superapp
+									GUI Superapp
 								</p>
 							</div>
 						</div>
@@ -215,14 +215,14 @@ export function DashboardLayout() {
 					<div className='p-6 h-full overflow-y-auto'>
 						<div className='flex items-center gap-3 mb-8'>
 							<div className='w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center'>
-								<span className='text-white font-bold text-lg'>UMI</span>
+								<span className='text-white font-bold text-lg'>GUI</span>
 							</div>
 							<div>
 								<h1 className='font-bold text-xl text-slate-900 dark:text-white'>
-									UmiFi
+									GuiVerse
 								</h1>
 								<p className='text-sm text-slate-500 dark:text-slate-400'>
-									Umi Superapp
+									GUI Superapp
 								</p>
 							</div>
 						</div>

@@ -3,10 +3,10 @@ import { injected } from 'wagmi/connectors';
 import { base, rootstock, rootstockTestnet, flowTestnet } from 'wagmi/chains';
 import { defineChain } from 'viem';
 
-// Define Umi Devnet chain
-export const umiDevnet = defineChain({
+// Define GUI Devnet chain
+export const guiDevnet = defineChain({
 	id: 42069,
-	name: 'Umi Devnet',
+	name: 'GUI Devnet',
 	nativeCurrency: {
 		decimals: 18,
 		name: 'Ether',
@@ -19,19 +19,19 @@ export const umiDevnet = defineChain({
 	},
 	blockExplorers: {
 		default: {
-			name: 'Umi Explorer',
+			name: 'GUI Explorer',
 			url: 'https://devnet.explorer.moved.network',
 		},
 	},
 });
 
 export const config = createConfig({
-	chains: [umiDevnet, base, rootstock, rootstockTestnet, flowTestnet],
+	chains: [guiDevnet, base, rootstock, rootstockTestnet, flowTestnet],
 	connectors: [
 		injected(), // Solo MetaMask/Injected wallets
 	],
 	transports: {
-		[umiDevnet.id]: http(),
+		[guiDevnet.id]: http(),
 		[base.id]: http(),
 		[rootstock.id]: http(),
 		[rootstockTestnet.id]: http(),

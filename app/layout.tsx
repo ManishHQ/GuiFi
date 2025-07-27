@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: 'UmiFi - Superapp on Umi Chain',
-	description: 'Intelligent UmiFi strategies across multiple blockchains',
+	title: 'GuiVerse - Superapp on GUI Chain',
+	description: 'Intelligent GuiVerse strategies across multiple blockchains',
 };
 
 export default function RootLayout({

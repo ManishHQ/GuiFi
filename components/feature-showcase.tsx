@@ -97,10 +97,10 @@ export function FeatureShowcase({ onNavigate }: FeatureShowcaseProps) {
 					<span className='text-white font-bold text-3xl'>AI</span>
 				</div>
 				<h1 className='text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white'>
-					Welcome to UmiFi
+					Welcome to GuiVerse
 				</h1>
 				<p className='text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto'>
-					The super app, powered by Umi Chain. Trade, predict, and launch with
+					The super app, powered by GUI Chain. Trade, predict, and launch with
 					confidence.
 				</p>
 			</div>

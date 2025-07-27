@@ -287,6 +287,9 @@ export function useTokenLaunchpadFactory() {
 			website: '',
 			twitter: '',
 			telegram: '',
+			logo: '/api/placeholder/64/64',
+			priceChange24h: Math.random() * 20 - 10, // -10 to +10
+			marketScore: Math.floor(Math.random() * 40) + 60, // 60-100
 		}));
 	};
 

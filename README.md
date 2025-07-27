@@ -1,13 +1,13 @@
-🌊 UmiFi — The Super App on UMI Chain
+🌊 GuiVerse — The Super App on GUI Chain
 Prediction Markets • Vault Pools • Token Launches
 
-UmiFi is an all-in-one Web3 super app built on the UMI Chain, designed to empower communities with tools for prediction, pooling, and token creation — all under one decentralized roof.
+GuiVerse is an all-in-one Web3 super app built on the GUI Chain, designed to empower communities with tools for prediction, pooling, and token creation — all under one decentralized roof.
 
 🧩 Core Modules
 🎯 Prediction Market
 
 - Create & trade binary markets (Yes/No)
-- Bet using UMI tokens
+- Bet using GUI tokens
 - 2.5% protocol fee on market resolution
 
 Community-resolved outcomes (with revertible logic)
@@ -20,7 +20,7 @@ Community-resolved outcomes (with revertible logic)
 
 🚀 Token Launchpad
 
-- Launch new tokens directly from UmiFi
+- Launch new tokens directly from GuiVerse
 - Fair launch & presale pools
 - Token+Market pairing for immediate prediction utility
 
@@ -30,10 +30,10 @@ Community-resolved outcomes (with revertible logic)
 - 💻 Next.js + TailwindCSS – Modern frontend
 - 🔗 Ethers.js – Wallet & contract interaction
 - 📦 Factory Pattern – Dynamic market/token/vault creation
-- 💾 Optional: The Graph, IPFS, UMI Testnet
+- 💾 Optional: The Graph, IPFS, GUI Testnet
 
-🔥 Why UmiFi?
-UmiFi unifies speculation, liquidity, and tokenization. From degenerate predictions to community-powered token launches, everything happens permissionlessly, transparently, and fast.
+🔥 Why GuiVerse?
+GuiVerse unifies speculation, liquidity, and tokenization. From degenerate predictions to community-powered token launches, everything happens permissionlessly, transparently, and fast.
 
 No need to hop across dApps.
 One interface. One chain. Full control.
@@ -56,5 +56,5 @@ yarn install
 yarn dev
 
 # Compile & deploy smart contracts
-forge build && forge deploy --rpc-url <UMI_RPC>
+forge build && forge deploy --rpc-url <GUI_RPC>
 ```

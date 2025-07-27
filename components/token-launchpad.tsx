@@ -18,10 +18,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SingleTokenPage } from './single-token-page';
-import {
-	useTokenLaunchpadFactory,
-	useTokenLaunch,
-} from '@/hooks/use-token-launchpad';
+import { useTokenLaunchpadFactory } from '@/hooks/use-token-launchpad';
 import { useAutoSwitchChain } from '@/hooks/use-auto-switch-chain';
 import { useChainId } from 'wagmi';
 
@@ -37,120 +34,9 @@ interface CreateTokenForm {
 	telegram: string;
 }
 
-interface TokenLaunch {
-	id: string;
-	name: string;
-	symbol: string;
-	description: string;
-	creator: string;
-	logo?: string;
-	totalSupply: number;
-	currentPrice: number;
-	marketCap: number;
-	liquidityRaised: number;
-	liquidityTarget: number;
-	participantCount: number;
-	launchDate: Date;
-	status: 'upcoming' | 'live' | 'completed' | 'failed';
-	category: string;
-	website?: string;
-	twitter?: string;
-	telegram?: string;
-	marketScore?: number;
-	priceChange24h?: number;
-}
-
-const MOCK_LAUNCHES: TokenLaunch[] = [
-	{
-		id: '1',
-		name: 'AI Prediction Token',
-		symbol: 'AIPRED',
-		description:
-			'Revolutionary AI-powered prediction market token with real-time sentiment analysis and automated market making.',
-		creator: '0x1234...5678',
-		logo: '/api/placeholder/64/64',
-		totalSupply: 1000000000,
-		currentPrice: 0.0045,
-		marketCap: 4500000,
-		liquidityRaised: 750000,
-		liquidityTarget: 1000000,
-		participantCount: 1247,
-		launchDate: new Date('2025-01-15'),
-		status: 'live',
-		category: 'AI',
-		website: 'https://aipred.io',
-		twitter: '@aipredtoken',
-		telegram: 'aipredcommunity',
-		marketScore: 92,
-		priceChange24h: 15.7,
-	},
-	{
-		id: '2',
-		name: 'DeFi Nexus',
-		symbol: 'DNEX',
-		description:
-			'Next-generation DeFi protocol enabling cross-chain yield farming with AI-optimized strategies.',
-		creator: '0x9876...5432',
-		totalSupply: 500000000,
-		currentPrice: 0.012,
-		marketCap: 6000000,
-		liquidityRaised: 450000,
-		liquidityTarget: 800000,
-		participantCount: 892,
-		launchDate: new Date('2025-01-20'),
-		status: 'live',
-		category: 'DeFi',
-		website: 'https://definexus.fi',
-		twitter: '@definexus',
-		marketScore: 88,
-		priceChange24h: -3.2,
-	},
-	{
-		id: '3',
-		name: 'GameFi Revolution',
-		symbol: 'GREV',
-		description:
-			'Play-to-earn gaming ecosystem with NFT integration and cross-game asset portability.',
-		creator: '0x5555...9999',
-		totalSupply: 2000000000,
-		currentPrice: 0.0008,
-		marketCap: 1600000,
-		liquidityRaised: 125000,
-		liquidityTarget: 500000,
-		participantCount: 356,
-		launchDate: new Date('2025-01-25'),
-		status: 'upcoming',
-		category: 'Gaming',
-		website: 'https://gamefirev.com',
-		telegram: 'gamefirevolution',
-		marketScore: 76,
-	},
-	{
-		id: '4',
-		name: 'Green Energy Coin',
-		symbol: 'GEC',
-		description:
-			'Sustainable blockchain solution for carbon credit trading and renewable energy financing.',
-		creator: '0x1111...2222',
-		totalSupply: 1500000000,
-		currentPrice: 0.025,
-		marketCap: 37500000,
-		liquidityRaised: 1200000,
-		liquidityTarget: 1200000,
-		participantCount: 2156,
-		launchDate: new Date('2024-12-15'),
-		status: 'completed',
-		category: 'Green Tech',
-		website: 'https://greenenergycoin.org',
-		twitter: '@greenenergycoin',
-		marketScore: 94,
-		priceChange24h: 8.4,
-	},
-];
-
 export function TokenLaunchpad() {
 	const chainId = useChainId();
-	const { switchToUmiDevnet } = useAutoSwitchChain();
+	const { switchToDevnet } = useAutoSwitchChain();
 	const [selectedStatus, setSelectedStatus] = useState('all');
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
@@ -166,18 +52,16 @@ export function TokenLaunchpad() {
 		telegram: '',
 	});
 
-	const {
-		launches,
-		isLoading: launchesLoading,
-		createTokenLaunch,
-		isCreating,
-	} = useTokenLaunchpadFactory();
+	const { launches, createTokenLaunch, isCreating } =
+		useTokenLaunchpadFactory();
+
+	const launchesLoading = false; // or create your own loading state if needed
 
 	// If a token is selected, show the single token view
 	if (selectedTokenId) {
 		return (
 			<SingleTokenPage
-				tokenAddress={selectedTokenId}
+				tokenId={selectedTokenId}
 				onBack={() => setSelectedTokenId(null)}
 			/>
 		);
@@ -229,41 +113,35 @@ export function TokenLaunchpad() {
 
 			// Switch to correct chain if needed
 			if (chainId !== 42069) {
-				await switchToUmiDevnet();
+				await switchToDevnet();
 				return;
 			}
 
-			const result = await createTokenLaunch({
-				name: newToken.name,
-				symbol: newToken.symbol,
-				totalSupply: BigInt(newToken.totalSupply),
-				liquidityTarget: BigInt(newToken.liquidityTarget),
-				tokenPrice: BigInt(newToken.tokenPrice),
-				description: newToken.description,
-				website: newToken.website,
-				twitter: newToken.twitter,
-				telegram: newToken.telegram,
-			});
+			await createTokenLaunch(
+				newToken.name,
+				newToken.symbol,
+				newToken.description,
+				parseInt(newToken.totalSupply),
+				parseFloat(newToken.liquidityTarget),
+				parseFloat(newToken.tokenPrice),
+				newToken.website,
+				newToken.twitter,
+				newToken.telegram
+			);
 
-			if (result.success) {
-				toast.success(
-					`Token launch created successfully! Address: ${result.tokenAddress}`
-				);
-				setIsCreateModalOpen(false);
-				setNewToken({
-					name: '',
-					symbol: '',
-					description: '',
-					totalSupply: '',
-					liquidityTarget: '',
-					tokenPrice: '',
-					website: '',
-					twitter: '',
-					telegram: '',
-				});
-			} else {
-				toast.error(result.error || 'Failed to create token launch');
-			}
+			toast.success('Token launch created successfully!');
+			setIsCreateModalOpen(false);
+			setNewToken({
+				name: '',
+				symbol: '',
+				description: '',
+				totalSupply: '',
+				liquidityTarget: '',
+				tokenPrice: '',
+				website: '',
+				twitter: '',
+				telegram: '',
+			});
 		} catch (error) {
 			console.error('Error creating token:', error);
 			toast.error('Failed to create token launch');
@@ -343,8 +221,9 @@ export function TokenLaunchpad() {
 							/>
 						</div>
 						<Input
-							placeholder='Token Price (in wei)'
+							placeholder='Token Price (in ETH)'
 							type='number'
+							step='0.001'
 							value={newToken.tokenPrice}
 							onChange={(e) =>
 								setNewToken({ ...newToken, tokenPrice: e.target.value })
@@ -429,18 +308,6 @@ export function TokenLaunchpad() {
 											<span className='text-sm font-mono text-slate-600 dark:text-slate-400'>
 												${launch.symbol}
 											</span>
-											{launch.priceChange24h && (
-												<span
-													className={`text-xs font-medium ${
-														launch.priceChange24h > 0
-															? 'text-green-600 dark:text-green-400'
-															: 'text-red-600 dark:text-red-400'
-													}`}
-												>
-													{launch.priceChange24h > 0 ? '+' : ''}
-													{launch.priceChange24h.toFixed(1)}%
-												</span>
-											)}
 										</div>
 									</div>
 								</div>
@@ -448,11 +315,6 @@ export function TokenLaunchpad() {
 									<Badge className={getStatusColor(launch.status)}>
 										{launch.status}
 									</Badge>
-									{launch.marketScore && (
-										<div className='text-xs text-orange-600 dark:text-orange-400 mt-1'>
-											📊 Market Score: {launch.marketScore}/100
-										</div>
-									)}
 								</div>
 							</div>
 
