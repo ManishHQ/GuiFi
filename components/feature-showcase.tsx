@@ -155,42 +155,6 @@ export function FeatureShowcase({ onNavigate }: FeatureShowcaseProps) {
 					/>
 				))}
 			</div>
-
-			{/* AI Insights Section */}
-			<Card className='bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950 border-slate-200 dark:border-slate-800'>
-				<CardHeader>
-					<CardTitle className='text-center text-2xl'>
-						🤖 AI-Powered Intelligence
-					</CardTitle>
-				</CardHeader>
-				<CardContent className='text-center space-y-4'>
-					<p className='text-slate-600 dark:text-slate-400 max-w-2xl mx-auto'>
-						Our advanced AI algorithms analyze market sentiment, predict trends,
-						and optimize your portfolio automatically. Experience the future of
-						decentralized finance with intelligent automation.
-					</p>
-					<div className='grid grid-cols-1 md:grid-cols-3 gap-4 mt-6'>
-						<div className='p-4 bg-white/50 dark:bg-slate-900/50 rounded-lg'>
-							<div className='text-lg font-semibold'>📊 Market Analysis</div>
-							<div className='text-sm text-slate-600 dark:text-slate-400'>
-								Real-time sentiment tracking
-							</div>
-						</div>
-						<div className='p-4 bg-white/50 dark:bg-slate-900/50 rounded-lg'>
-							<div className='text-lg font-semibold'>⚡ Auto-Optimization</div>
-							<div className='text-sm text-slate-600 dark:text-slate-400'>
-								Dynamic strategy adjustment
-							</div>
-						</div>
-						<div className='p-4 bg-white/50 dark:bg-slate-900/50 rounded-lg'>
-							<div className='text-lg font-semibold'>🎯 Risk Assessment</div>
-							<div className='text-sm text-slate-600 dark:text-slate-400'>
-								Intelligent risk scoring
-							</div>
-						</div>
-					</div>
-				</CardContent>
-			</Card>
 		</div>
 	);
 }
