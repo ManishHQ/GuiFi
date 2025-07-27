@@ -193,10 +193,7 @@ export function UserPositions() {
 							<Button className='bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white'>
 								Explore Vaults
 							</Button>
-							<Button
-								variant='outline'
-								className='border-orange-500 text-orange-600 hover:bg-orange-50'
-							>
+							<Button className='border-orange-500 text-orange-600 hover:bg-orange-50'>
 								Launch Token
 							</Button>
 						</div>
