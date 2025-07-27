@@ -1,19 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TransactionHistory } from '@/components/transaction-history';
 import { NavBar } from '@/components/nav-bar';
-import { UserPositions } from '@/components/user-positions';
-import { PredictionMarket } from '@/components/prediction-market';
-import { TokenLaunchpad } from '@/components/token-launchpad';
-import { FeatureShowcase } from '@/components/feature-showcase';
-import { ComingSoon } from '@/components/coming-soon';
 import { getVaultAddress } from '@/constants/contracts';
 import { useChainId } from 'wagmi';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface VaultData {
 	id: string;
@@ -48,59 +42,73 @@ const REAL_VAULTS: VaultData[] = [
 		riskLevel: 'High',
 		strategy: 'USDC Yield Optimization',
 		performance: 13.2,
-		deposits: 320000,
+		deposits: 180000,
 		allocation: {
-			'USDC Strategies': 100,
+			'Liquid Staking': 35,
+			'Yield Farming': 40,
+			Arbitrage: 25,
 		},
-		supportedTokens: ['MockUSDC'],
+		supportedTokens: ['USDC', 'FLOW'],
 	},
 	{
-		id: 'rootstock-testnet-vault',
-		name: 'Rootstock Testnet Vault',
-		description:
-			'USDC vault on Rootstock Testnet with Bitcoin DeFi integration',
+		id: 'rootstock-testnet-multi-token-vault',
+		name: 'Rootstock Testnet Multi-Token Vault',
+		description: 'Bitcoin-secured DeFi yield strategies on Rootstock Testnet',
 		blockchain: 'Rootstock Testnet',
 		chainId: 31,
 		contractAddress:
-			getVaultAddress('rootstockTestnet', 'Vault') ||
-			'0x8fDE7A649c782c96e7f4D9D88490a7C5031F51a9',
+			getVaultAddress('rootstockTestnet', 'MultiTokenVault') ||
+			'0x8A2F3B1c5D6E7F9A0B3C4D5E6F7G8H9I0J1K2L3M',
 		apy: 18.2,
-		tvl: 750000,
-		riskLevel: 'Medium',
-		strategy: 'Bitcoin-backed USDC Yield Optimization',
-		performance: 15.1,
-		deposits: 580000,
+		tvl: 320000,
+		riskLevel: 'High',
+		strategy: 'BTC-backed Yield Generation',
+		performance: 15.8,
+		deposits: 120000,
 		allocation: {
-			'USDC Lending': 100,
+			'BTC Staking': 50,
+			'DeFi Protocols': 30,
+			'Liquidity Mining': 20,
 		},
-		supportedTokens: ['MockUSDC'],
+		supportedTokens: ['RBTC', 'USDT'],
 	},
 ];
 
-export function DashboardLayout() {
-	const [activeTab, setActiveTab] = useState('overview');
+interface DashboardLayoutProps {
+	children?: React.ReactNode;
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const [selectedVault, setSelectedVault] = useState<VaultData | null>(null);
+	const chainId = useChainId();
+	const pathname = usePathname();
 
-	// Get current chain ID to filter vaults and faucet
-	const currentChainId = useChainId();
-
-	// Filter vaults by current chain
+	// Filter vaults based on current chain
 	const filteredVaults = REAL_VAULTS.filter(
-		(vault) => vault.chainId === currentChainId
+		(vault) => vault.chainId === chainId
 	);
 
-	// Update selectedVault when filteredVaults changes
+	// Set default selected vault when filtered vaults change
 	useEffect(() => {
-		if (
-			filteredVaults.length > 0 &&
-			(!selectedVault || !filteredVaults.find((v) => v.id === selectedVault.id))
-		) {
+		if (filteredVaults.length > 0 && !selectedVault) {
 			setSelectedVault(filteredVaults[0]);
 		} else if (filteredVaults.length === 0) {
 			setSelectedVault(null);
 		}
 	}, [filteredVaults, selectedVault]);
+
+	// Determine active tab based on pathname
+	const getActiveTab = () => {
+		if (pathname === '/') return 'overview';
+		if (pathname.startsWith('/vaults')) return 'vaults';
+		if (pathname.startsWith('/predictions')) return 'predictions';
+		if (pathname.startsWith('/launchpad')) return 'launchpad';
+		if (pathname.startsWith('/portfolio')) return 'portfolio';
+		return 'overview';
+	};
+
+	const activeTab = getActiveTab();
 
 	return (
 		<div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950'>
@@ -135,56 +143,57 @@ export function DashboardLayout() {
 					{isMobileMenuOpen && (
 						<div className='p-4 bg-white/95 dark:bg-slate-950/95 border-b border-slate-200/60 dark:border-slate-800/60'>
 							<nav className='grid grid-cols-3 gap-2 mb-4'>
-								<Button
-									variant={activeTab === 'overview' ? 'default' : 'neutral'}
-									className='text-xs'
-									onClick={() => {
-										setActiveTab('overview');
-										setIsMobileMenuOpen(false);
-									}}
+								<Link href='/' onClick={() => setIsMobileMenuOpen(false)}>
+									<Button
+										variant={activeTab === 'overview' ? 'default' : 'neutral'}
+										className='text-xs w-full'
+									>
+										📊 Overview
+									</Button>
+								</Link>
+								<Link href='/vaults' onClick={() => setIsMobileMenuOpen(false)}>
+									<Button
+										variant={activeTab === 'vaults' ? 'default' : 'neutral'}
+										className='text-xs w-full'
+									>
+										🏦 Vaults
+									</Button>
+								</Link>
+								<Link
+									href='/predictions'
+									onClick={() => setIsMobileMenuOpen(false)}
 								>
-									📊 Overview
-								</Button>
-								<Button
-									variant={activeTab === 'vaults' ? 'default' : 'neutral'}
-									className='text-xs'
-									onClick={() => {
-										setActiveTab('vaults');
-										setIsMobileMenuOpen(false);
-									}}
+									<Button
+										variant={
+											activeTab === 'predictions' ? 'default' : 'neutral'
+										}
+										className='text-xs w-full'
+									>
+										🔮 Predictions
+									</Button>
+								</Link>
+								<Link
+									href='/launchpad'
+									onClick={() => setIsMobileMenuOpen(false)}
 								>
-									🏦 Vaults
-								</Button>
-								<Button
-									variant={activeTab === 'predictions' ? 'default' : 'neutral'}
-									className='text-xs'
-									onClick={() => {
-										setActiveTab('predictions');
-										setIsMobileMenuOpen(false);
-									}}
+									<Button
+										variant={activeTab === 'launchpad' ? 'default' : 'neutral'}
+										className='text-xs w-full'
+									>
+										🚀 Launchpad
+									</Button>
+								</Link>
+								<Link
+									href='/portfolio'
+									onClick={() => setIsMobileMenuOpen(false)}
 								>
-									🔮 Predictions
-								</Button>
-								<Button
-									variant={activeTab === 'launchpad' ? 'default' : 'neutral'}
-									className='text-xs'
-									onClick={() => {
-										setActiveTab('launchpad');
-										setIsMobileMenuOpen(false);
-									}}
-								>
-									🚀 Launchpad
-								</Button>
-								<Button
-									variant={activeTab === 'portfolio' ? 'default' : 'neutral'}
-									className='text-xs'
-									onClick={() => {
-										setActiveTab('portfolio');
-										setIsMobileMenuOpen(false);
-									}}
-								>
-									💼 Portfolio
-								</Button>
+									<Button
+										variant={activeTab === 'portfolio' ? 'default' : 'neutral'}
+										className='text-xs w-full'
+									>
+										💼 Portfolio
+									</Button>
+								</Link>
 							</nav>
 
 							<div className='grid grid-cols-1 gap-2'>
@@ -227,42 +236,47 @@ export function DashboardLayout() {
 							</div>
 						</div>
 
-						<nav className='space-y-2'>
-							<Button
-								variant={activeTab === 'overview' ? 'default' : 'neutral'}
-								className='w-full justify-start'
-								onClick={() => setActiveTab('overview')}
-							>
-								📊 Overview
-							</Button>
-							<Button
-								variant={activeTab === 'vaults' ? 'default' : 'neutral'}
-								className='w-full justify-start'
-								onClick={() => setActiveTab('vaults')}
-							>
-								🏦 Vaults
-							</Button>
-							<Button
-								variant={activeTab === 'predictions' ? 'default' : 'neutral'}
-								className='w-full justify-start'
-								onClick={() => setActiveTab('predictions')}
-							>
-								🔮 Predictions
-							</Button>
-							<Button
-								variant={activeTab === 'launchpad' ? 'default' : 'neutral'}
-								className='w-full justify-start'
-								onClick={() => setActiveTab('launchpad')}
-							>
-								🚀 Launchpad
-							</Button>
-							<Button
-								variant={activeTab === 'portfolio' ? 'default' : 'neutral'}
-								className='w-full justify-start'
-								onClick={() => setActiveTab('portfolio')}
-							>
-								💼 Portfolio
-							</Button>
+						<nav className='flex flex-col space-y-2'>
+							<Link href='/'>
+								<Button
+									variant={activeTab === 'overview' ? 'default' : 'neutral'}
+									className='w-full justify-start'
+								>
+									📊 Overview
+								</Button>
+							</Link>
+							<Link href='/vaults'>
+								<Button
+									variant={activeTab === 'vaults' ? 'default' : 'neutral'}
+									className='w-full justify-start'
+								>
+									🏦 Vaults
+								</Button>
+							</Link>
+							<Link href='/predictions'>
+								<Button
+									variant={activeTab === 'predictions' ? 'default' : 'neutral'}
+									className='w-full justify-start'
+								>
+									🔮 Predictions
+								</Button>
+							</Link>
+							<Link href='/launchpad'>
+								<Button
+									variant={activeTab === 'launchpad' ? 'default' : 'neutral'}
+									className='w-full justify-start'
+								>
+									🚀 Launchpad
+								</Button>
+							</Link>
+							<Link href='/portfolio'>
+								<Button
+									variant={activeTab === 'portfolio' ? 'default' : 'neutral'}
+									className='w-full justify-start'
+								>
+									💼 Portfolio
+								</Button>
+							</Link>
 						</nav>
 
 						<div className='mt-8'>
@@ -282,112 +296,7 @@ export function DashboardLayout() {
 					<NavBar />
 
 					<main className='flex-1 p-3 sm:p-4 lg:p-6 pt-16 lg:pt-20 pr-6 sm:pr-8 lg:pr-16'>
-						<Tabs
-							value={activeTab}
-							onValueChange={setActiveTab}
-							className='w-full h-full'
-						>
-							<TabsContent
-								value='overview'
-								className='space-y-4 lg:space-y-6 mt-0 pb-20'
-							>
-								<FeatureShowcase onNavigate={(tab) => setActiveTab(tab)} />
-							</TabsContent>
-
-							<TabsContent
-								value='vaults'
-								className='space-y-4 lg:space-y-6 mt-0 pb-20'
-							>
-								<ComingSoon
-									title='🏦 Vaults & Pools'
-									description='Advanced DeFi vaults and liquidity pools'
-									icon='🏦'
-									featureName='Vaults and Pools'
-								/>
-							</TabsContent>
-
-							<TabsContent
-								value='portfolio'
-								className='space-y-4 lg:space-y-6 mt-0 pb-20'
-							>
-								<div className='grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6'>
-									{/* User Positions - takes up 2 columns */}
-									<div className='xl:col-span-2 space-y-4 lg:space-y-6'>
-										<UserPositions />
-										<TransactionHistory />
-									</div>
-
-									{/* Side panel - Portfolio summary */}
-									<div className='space-y-4 lg:space-y-6'>
-										<Card>
-											<CardHeader>
-												<CardTitle className='text-lg lg:text-xl'>
-													Portfolio Summary
-												</CardTitle>
-											</CardHeader>
-											<CardContent>
-												<div className='space-y-4'>
-													<div className='text-center py-8'>
-														<div className='text-4xl mb-2'>📊</div>
-														<p className='text-slate-600 dark:text-slate-400 text-sm'>
-															Portfolio data coming soon
-														</p>
-													</div>
-												</div>
-											</CardContent>
-										</Card>
-
-										<Card>
-											<CardHeader>
-												<CardTitle className='text-lg lg:text-xl'>
-													Performance Summary
-												</CardTitle>
-											</CardHeader>
-											<CardContent className='space-y-4'>
-												<div className='flex justify-between items-center'>
-													<span className='text-sm text-slate-600 dark:text-slate-400'>
-														Total PnL
-													</span>
-													<span className='font-medium text-green-600 dark:text-green-400'>
-														+$12,450
-													</span>
-												</div>
-												<div className='flex justify-between items-center'>
-													<span className='text-sm text-slate-600 dark:text-slate-400'>
-														24h Change
-													</span>
-													<span className='font-medium text-green-600 dark:text-green-400'>
-														+2.1%
-													</span>
-												</div>
-												<div className='flex justify-between items-center'>
-													<span className='text-sm text-slate-600 dark:text-slate-400'>
-														Best Performer
-													</span>
-													<span className='font-medium text-slate-900 dark:text-white'>
-														Arbitrum
-													</span>
-												</div>
-											</CardContent>
-										</Card>
-									</div>
-								</div>
-							</TabsContent>
-
-							<TabsContent
-								value='predictions'
-								className='space-y-4 lg:space-y-6 mt-0 pb-20'
-							>
-								<PredictionMarket />
-							</TabsContent>
-
-							<TabsContent
-								value='launchpad'
-								className='space-y-4 lg:space-y-6 mt-0 pb-20'
-							>
-								<TokenLaunchpad />
-							</TabsContent>
-						</Tabs>
+						<div className='space-y-4 lg:space-y-6 mt-0 pb-20'>{children}</div>
 					</main>
 				</div>
 			</div>
