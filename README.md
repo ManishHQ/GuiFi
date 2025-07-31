@@ -1,50 +1,51 @@
-🌊 GuiVerse — The Super App on GUI Chain
+🌊 GuiVerse — Demo Version
 Prediction Markets • Vault Pools • Token Launches
 
-GuiVerse is an all-in-one Web3 super app built on the GUI Chain, designed to empower communities with tools for prediction, pooling, and token creation — all under one decentralized roof.
+GuiVerse is a demo application showcasing a Web3 super app interface, designed to demonstrate tools for prediction markets, vault pools, and token launches — all in a user-friendly demo environment.
 
 🧩 Core Modules
 🎯 Prediction Market
 
 - Create & trade binary markets (Yes/No)
-- Bet using GUI tokens
-- 2.5% protocol fee on market resolution
-
-Community-resolved outcomes (with revertible logic)
+- Place bets using demo tokens
+- Community-resolved outcomes
 
 💰 Vaults & Liquidity Pools
 
-- Permissionless staking vaults
+- Demo staking vaults
 - Token-paired liquidity pools
-- Yield-earning & lock-based strategies (coming soon)
+- Yield-earning strategies (simulated)
 
 🚀 Token Launchpad
 
-- Launch new tokens directly from GuiVerse
+- Launch new tokens in demo mode
 - Fair launch & presale pools
 - Token+Market pairing for immediate prediction utility
 
 🔧 Tech Stack
 
-- 📝 Solidity – EVM Smart Contracts
 - 💻 Next.js + TailwindCSS – Modern frontend
-- 🔗 Ethers.js – Wallet & contract interaction
-- 📦 Factory Pattern – Dynamic market/token/vault creation
-- 💾 Optional: The Graph, IPFS, GUI Testnet
+- 🎨 Radix UI – Beautiful component library
+- 📦 React Hooks – State management
+- 💾 Mock Data – Demo functionality
 
-🔥 Why GuiVerse?
-GuiVerse unifies speculation, liquidity, and tokenization. From degenerate predictions to community-powered token launches, everything happens permissionlessly, transparently, and fast.
+🔥 Why GuiVerse Demo?
+GuiVerse demo showcases a unified interface for speculation, liquidity, and tokenization. From prediction markets to community-powered token launches, everything is demonstrated in a safe, demo environment.
 
-No need to hop across dApps.
-One interface. One chain. Full control.
+Perfect for:
 
-📚 Coming Soon
+- UI/UX exploration
+- Feature demonstration
+- User onboarding
+- Development reference
 
-- ERC-20 and LP token support
-- DAO-based dispute resolution
-- Cross-market statistics & leaderboards
-- Gamified reputation scoring
-- Mobile-first design (React Native / PWA)
+📚 Demo Features
+
+- Interactive prediction markets
+- Simulated vault deposits/withdrawals
+- Token launchpad with mock data
+- Responsive design
+- Dark/light mode support
 
 🛠️ How to Use
 
@@ -55,6 +56,9 @@ yarn install
 # Start frontend
 yarn dev
 
-# Compile & deploy smart contracts
-forge build && forge deploy --rpc-url <GUI_RPC>
+# Open in browser
+http://localhost:3000
 ```
+
+🎮 Demo Mode
+This is a demonstration version with mock data. No real blockchain transactions occur. All interactions are simulated for educational and demonstration purposes.

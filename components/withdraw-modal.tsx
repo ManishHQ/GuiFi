@@ -1,445 +1,170 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  useAccount,
-  useReadContract,
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useChainId,
-  useSwitchChain,
-} from "wagmi";
-import { parseUnits, formatUnits, Address } from "viem";
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface VaultData {
-  id: string;
-  name: string;
-  blockchain: string;
-  chainId: number;
-  contractAddress: string;
-  supportedTokens: string[];
+	id: string;
+	name: string;
+	blockchain: string;
+	chainId: number;
+	contractAddress: string;
+	supportedTokens: string[];
 }
 
 interface WithdrawModalProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  vault: VaultData | null;
+	isOpen: boolean;
+	onOpenChange: (open: boolean) => void;
+	vault: VaultData | null;
 }
 
-// ERC4626 Vault ABI for withdrawal
-const VAULT_ABI = [
-  {
-    name: "withdraw",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "assets", type: "uint256" },
-      { name: "receiver", type: "address" },
-      { name: "owner", type: "address" },
-    ],
-    outputs: [{ name: "shares", type: "uint256" }],
-  },
-  {
-    name: "previewWithdraw",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "assets", type: "uint256" }],
-    outputs: [{ name: "shares", type: "uint256" }],
-  },
-  {
-    name: "balanceOf",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "account", type: "address" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    name: "maxWithdraw",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "owner", type: "address" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-] as const;
-
 export function WithdrawModal({
-  isOpen,
-  onOpenChange,
-  vault,
+	isOpen,
+	onOpenChange,
+	vault,
 }: WithdrawModalProps) {
-  const [amount, setAmount] = useState<string>("");
+	const [amount, setAmount] = useState<string>('');
+	const [isLoading, setIsLoading] = useState(false);
 
-  const { address: userAddress } = useAccount();
-  const currentChainId = useChainId();
-  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
+	// Mock data
+	const mockSharesBalance = '100.0';
+	const mockMaxWithdraw = '50.0';
 
-  const {
-    writeContract: writeWithdraw,
-    data: withdrawHash,
-    isPending: isWithdrawPending,
-  } = useWriteContract();
+	const getBlockchainName = (blockchain: string | undefined) => {
+		switch (blockchain) {
+			case 'Flow Testnet':
+				return '🌊 Flow Testnet';
+			case 'Rootstock Testnet':
+				return '₿ Rootstock Testnet';
+			default:
+				return blockchain;
+		}
+	};
 
-  // Get user's vault shares balance
-  const { data: sharesBalance } = useReadContract({
-    address: vault?.contractAddress as Address,
-    abi: VAULT_ABI,
-    functionName: "balanceOf",
-    args: userAddress ? [userAddress] : undefined,
-    query: { enabled: !!vault && !!userAddress },
-  });
+	const getBlockchainColor = (blockchain: string) => {
+		switch (blockchain) {
+			case 'Flow Testnet':
+				return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+			case 'Rootstock Testnet':
+				return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+			default:
+				return 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300';
+		}
+	};
 
-  // Get max withdrawable amount
-  const { data: maxWithdrawAmount } = useReadContract({
-    address: vault?.contractAddress as Address,
-    abi: VAULT_ABI,
-    functionName: "maxWithdraw",
-    args: userAddress ? [userAddress] : undefined,
-    query: { enabled: !!vault && !!userAddress },
-  });
+	const handleWithdraw = async () => {
+		if (!amount || !vault) return;
 
-  // Parse amount (assuming USDC with 6 decimals for withdrawal)
-  const parsedAmount = amount ? parseUnits(amount, 6) : BigInt(0);
+		setIsLoading(true);
 
-  // Preview shares needed for withdrawal
-  const { data: sharesNeeded } = useReadContract({
-    address: vault?.contractAddress as Address,
-    abi: VAULT_ABI,
-    functionName: "previewWithdraw",
-    args: parsedAmount > BigInt(0) ? [parsedAmount] : undefined,
-    query: { enabled: parsedAmount > BigInt(0) && !!vault },
-  });
+		// Simulate withdraw transaction
+		await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  // Wait for withdrawal transaction confirmation
-  const { isLoading: isWithdrawConfirming, isSuccess: isWithdrawSuccess } =
-    useWaitForTransactionReceipt({
-      hash: withdrawHash,
-    });
+		// Close modal and reset
+		onOpenChange(false);
+		setAmount('');
+		setIsLoading(false);
+	};
 
-  // Reset form when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setAmount("");
-    }
-  }, [isOpen]);
+	const handleMaxWithdraw = () => {
+		setAmount(mockMaxWithdraw);
+	};
 
-  // Close modal on successful withdrawal
-  useEffect(() => {
-    if (isWithdrawSuccess) {
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 2000);
-    }
-  }, [isWithdrawSuccess, onOpenChange]);
+	return (
+		<Dialog open={isOpen} onOpenChange={onOpenChange}>
+			<DialogContent className='sm:max-w-md'>
+				<DialogHeader>
+					<DialogTitle className='text-center text-xl font-bold'>
+						Withdraw from Vault
+					</DialogTitle>
+					<DialogDescription className='text-center text-slate-600 dark:text-slate-400'>
+						Withdraw your liquidity and earned yield
+					</DialogDescription>
+				</DialogHeader>
 
-  const handleWithdraw = async () => {
-    if (!vault || !userAddress || parsedAmount === BigInt(0)) return;
+				{vault && (
+					<div className='space-y-4 py-4'>
+						{/* Vault Info */}
+						<div className='p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50'>
+							<div className='flex items-center justify-between mb-2'>
+								<h3 className='font-semibold text-slate-900 dark:text-white'>
+									{vault.name}
+								</h3>
+								<Badge className={getBlockchainColor(vault.blockchain)}>
+									{getBlockchainName(vault.blockchain)}
+								</Badge>
+							</div>
+							<p className='text-sm text-slate-600 dark:text-slate-400'>
+								Contract: {vault.contractAddress.slice(0, 6)}...
+								{vault.contractAddress.slice(-4)}
+							</p>
+						</div>
 
-    try {
-      writeWithdraw({
-        address: vault.contractAddress as Address,
-        abi: VAULT_ABI,
-        functionName: "withdraw",
-        args: [parsedAmount, userAddress, userAddress],
-      });
-    } catch (error) {
-      console.error("Withdrawal failed:", error);
-    }
-  };
+						{/* Balance Info */}
+						<div className='p-4 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800'>
+							<div className='space-y-2'>
+								<div className='flex justify-between text-sm'>
+									<span className='text-slate-600 dark:text-slate-400'>
+										Your Shares:
+									</span>
+									<span className='font-medium'>{mockSharesBalance}</span>
+								</div>
+								<div className='flex justify-between text-sm'>
+									<span className='text-slate-600 dark:text-slate-400'>
+										Max Withdraw:
+									</span>
+									<span className='font-medium'>{mockMaxWithdraw}</span>
+								</div>
+							</div>
+						</div>
 
-  const formatBalance = (balance: bigint, decimals: number) => {
-    return parseFloat(formatUnits(balance, decimals)).toFixed(4);
-  };
+						{/* Amount Input */}
+						<div className='space-y-2'>
+							<Label htmlFor='amount'>Withdraw Amount (Shares)</Label>
+							<div className='flex gap-2'>
+								<Input
+									id='amount'
+									type='number'
+									placeholder='0.00'
+									value={amount}
+									onChange={(e) => setAmount(e.target.value)}
+									className='flex-1 text-right'
+								/>
+								<Button onClick={handleMaxWithdraw} variant='neutral' size='sm'>
+									Max
+								</Button>
+							</div>
+						</div>
 
-  const isFormValid = amount && parseFloat(amount) > 0 && userAddress;
-  const hasInsufficientShares =
-    sharesNeeded && sharesBalance && sharesNeeded > sharesBalance;
-  const exceedsMaxWithdraw =
-    maxWithdrawAmount && parsedAmount > maxWithdrawAmount;
+						{/* Demo Notice */}
+						<Alert>
+							<AlertDescription>
+								This is a demo version. No real transactions will be made.
+							</AlertDescription>
+						</Alert>
 
-  // Chain verification
-  const isCorrectChain = currentChainId === vault?.chainId;
-  const needsChainSwitch = vault && !isCorrectChain;
-
-  const isWithdrawInProgress = isWithdrawPending || isWithdrawConfirming;
-
-  const handleSwitchChain = async () => {
-    if (!vault) return;
-    try {
-      await switchChain({ chainId: vault.chainId });
-    } catch (error) {
-      console.error("Failed to switch chain:", error);
-    }
-  };
-
-  const getBlockchainColor = (blockchain: string) => {
-    switch (blockchain) {
-      case "Flow Testnet":
-        return "from-green-400 to-emerald-500";
-      case "Rootstock Testnet":
-        return "from-orange-400 to-red-500";
-      default:
-        return "from-gray-400 to-gray-500";
-    }
-  };
-
-  if (!vault) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <div className="flex items-center gap-3 justify-center">
-            <div
-              className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getBlockchainColor(
-                vault.blockchain
-              )} flex items-center justify-center`}
-            >
-              <span className="text-white font-bold text-sm">
-                {vault.blockchain === "Flow Testnet" ? "🌊" : "₿"}
-              </span>
-            </div>
-            <DialogTitle className="text-xl font-bold text-center">
-              Withdraw from {vault.name}
-            </DialogTitle>
-          </div>
-          <DialogDescription className="text-center text-slate-600 dark:text-slate-400">
-            Withdraw your deposited funds from the vault
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          {/* Wallet Connection Check */}
-          {!userAddress && (
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 p-6 text-center">
-              <div className="absolute inset-0 bg-blue-500/5"></div>
-              <div className="relative">
-                <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-3">
-                  <span className="text-xl">💼</span>
-                </div>
-                <h3 className="font-semibold text-blue-700 dark:text-blue-300 mb-1">
-                  Connect Your Wallet
-                </h3>
-                <p className="text-sm text-blue-600 dark:text-blue-400">
-                  Please connect your wallet to withdraw from this vault
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Chain Switch Warning */}
-          {userAddress && needsChainSwitch && (
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950 dark:to-amber-950 p-6">
-              <div className="absolute inset-0 bg-orange-500/5"></div>
-              <div className="relative space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center">
-                    <span className="text-xl">⚠️</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-orange-700 dark:text-orange-300">
-                      Wrong Network Detected
-                    </h3>
-                    <p className="text-sm text-orange-600 dark:text-orange-400">
-                      Switch to {vault.blockchain} (Chain ID: {vault.chainId})
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleSwitchChain}
-                  disabled={isSwitchingChain}
-                  className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white"
-                >
-                  {isSwitchingChain ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Switching to {vault.blockchain}...
-                    </div>
-                  ) : (
-                    `Switch to ${vault.blockchain}`
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Only show form if wallet connected and on correct chain */}
-          {userAddress && isCorrectChain && (
-            <>
-              {/* Balance Info */}
-              <div className="space-y-3 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
-                <h4 className="font-medium text-slate-900 dark:text-white">
-                  Your Vault Position
-                </h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">
-                      Vault Shares:
-                    </span>
-                    <span className="font-medium">
-                      {sharesBalance
-                        ? formatBalance(sharesBalance, 18)
-                        : "0.0000"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">
-                      Max Withdrawable:
-                    </span>
-                    <span className="font-medium">
-                      {maxWithdrawAmount
-                        ? `$${formatBalance(maxWithdrawAmount, 6)}`
-                        : "$0.00"}{" "}
-                      USDC
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Amount Input */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="amount">Withdrawal Amount (USDC)</Label>
-                  {maxWithdrawAmount && (
-                    <Button
-                      type="button"
-                      variant="neutral"
-                      size="sm"
-                      className="h-auto p-1 text-xs"
-                      onClick={() =>
-                        setAmount(formatBalance(maxWithdrawAmount, 6))
-                      }
-                    >
-                      Max
-                    </Button>
-                  )}
-                </div>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="0.0"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  step="any"
-                  min="0"
-                />
-
-                {hasInsufficientShares && (
-                  <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
-                    <AlertDescription className="text-red-700 dark:text-red-300 text-sm">
-                      Insufficient vault shares for this withdrawal amount
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {exceedsMaxWithdraw && (
-                  <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
-                    <AlertDescription className="text-red-700 dark:text-red-300 text-sm">
-                      Amount exceeds maximum withdrawable: $
-                      {maxWithdrawAmount
-                        ? formatBalance(maxWithdrawAmount, 6)
-                        : "0"}{" "}
-                      USDC
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-
-              {/* Preview */}
-              {sharesNeeded && (
-                <div className="space-y-3 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
-                  <h4 className="font-medium text-slate-900 dark:text-white">
-                    Preview
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">
-                        Withdrawal Amount:
-                      </span>
-                      <span className="font-medium">${amount} USDC</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">
-                        Shares to Burn:
-                      </span>
-                      <span className="font-medium">
-                        {formatBalance(sharesNeeded, 18)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Withdraw Button */}
-              <Button
-                onClick={handleWithdraw}
-                disabled={
-                  !isFormValid ||
-                  hasInsufficientShares ||
-                  exceedsMaxWithdraw ||
-                  isWithdrawInProgress
-                }
-                className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
-              >
-                {isWithdrawInProgress ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Withdrawing...
-                  </div>
-                ) : (
-                  "Withdraw"
-                )}
-              </Button>
-
-              {/* Success Message */}
-              {isWithdrawSuccess && (
-                <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-                  <AlertDescription className="text-green-700 dark:text-green-300 text-sm">
-                    ✅ Withdrawal successful! Your funds have been transferred
-                    to your wallet.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Transaction Info */}
-              <div className="space-y-2">
-                <div className="text-xs text-center text-slate-500 dark:text-slate-400">
-                  Withdrawing on {vault.blockchain} (Chain ID: {vault.chainId})
-                </div>
-
-                {withdrawHash && (
-                  <div className="text-xs text-center">
-                    <span className="text-slate-500">Transaction: </span>
-                    <a
-                      href={`https://${
-                        vault.chainId === 31
-                          ? "explorer.testnet.rsk.co"
-                          : "evm-testnet.flowscan.io"
-                      }/tx/${withdrawHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:text-blue-600 font-mono"
-                    >
-                      {withdrawHash.slice(0, 6)}...{withdrawHash.slice(-4)}
-                    </a>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+						{/* Action Button */}
+						<Button
+							onClick={handleWithdraw}
+							disabled={!amount || isLoading}
+							className='w-full'
+						>
+							{isLoading ? 'Processing...' : 'Withdraw'}
+						</Button>
+					</div>
+				)}
+			</DialogContent>
+		</Dialog>
+	);
 }

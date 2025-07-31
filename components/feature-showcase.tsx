@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Image from 'next/image';
 
 interface FeatureCardProps {
 	title: string;
@@ -93,8 +94,8 @@ export function FeatureShowcase({ onNavigate }: FeatureShowcaseProps) {
 		<div className='space-y-8'>
 			{/* Hero Section */}
 			<div className='text-center space-y-4'>
-				<div className='w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center mb-6'>
-					<span className='text-white font-bold text-3xl'>AI</span>
+				<div className='w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br flex items-center justify-center mb-6'>
+					<Image src='/logo.png' alt='GuiVerse Logo' width={80} height={80} />
 				</div>
 				<h1 className='text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white'>
 					Welcome to GuiVerse

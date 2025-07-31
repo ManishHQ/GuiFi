@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAccount } from 'wagmi';
+// import { useAccount } from 'wagmi';
 import { useTokenLaunchpadFactory } from '@/hooks/use-token-launchpad';
 
 interface VaultPosition {
@@ -32,9 +32,9 @@ interface TokenPosition {
 }
 
 export function UserPositions() {
-	const { address } = useAccount();
+	const address = '0xDemoUser123456789012345678901234567890';
 	const [isLoading, setIsLoading] = useState(true);
-	const { launchAddresses } = useTokenLaunchpadFactory();
+	const { launches } = useTokenLaunchpadFactory();
 
 	useEffect(() => {
 		if (!address) {
@@ -144,9 +144,9 @@ export function UserPositions() {
 	];
 
 	// Create mock token positions based on launched tokens
-	const tokenPositions: TokenPosition[] = Array.isArray(launchAddresses)
-		? launchAddresses.slice(0, 3).map((address, index) => ({
-				tokenAddress: address,
+	const tokenPositions: TokenPosition[] = Array.isArray(launches)
+		? launches.slice(0, 3).map((launch, index) => ({
+				tokenAddress: launch.address,
 				tokenName: `Token ${index + 1}`,
 				tokenSymbol: `TKN${index + 1}`,
 				balance: `${(Math.random() * 1000).toFixed(2)}`,

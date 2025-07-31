@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -9,29 +9,10 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-	useAccount,
-	useReadContract,
-	useWriteContract,
-	useWaitForTransactionReceipt,
-} from 'wagmi';
-import { parseUnits, formatUnits, Address } from 'viem';
-import {
-	getTokenAddress,
-	getTokenConfig,
-	TokenName,
-} from '@/constants/contracts';
 import { DepositSuccess } from './deposit-success';
 
 interface VaultData {
@@ -50,58 +31,6 @@ interface DepositModalProps {
 	goToFaucet: () => void;
 }
 
-// ERC20 ABI for token operations
-const ERC20_ABI = [
-	{
-		name: 'balanceOf',
-		type: 'function',
-		stateMutability: 'view',
-		inputs: [{ name: 'account', type: 'address' }],
-		outputs: [{ name: '', type: 'uint256' }],
-	},
-	{
-		name: 'allowance',
-		type: 'function',
-		stateMutability: 'view',
-		inputs: [
-			{ name: 'owner', type: 'address' },
-			{ name: 'spender', type: 'address' },
-		],
-		outputs: [{ name: '', type: 'uint256' }],
-	},
-	{
-		name: 'approve',
-		type: 'function',
-		stateMutability: 'nonpayable',
-		inputs: [
-			{ name: 'spender', type: 'address' },
-			{ name: 'amount', type: 'uint256' },
-		],
-		outputs: [{ name: '', type: 'bool' }],
-	},
-] as const;
-
-// MultiTokenVault ABI (partial) - Standard ERC4626
-const VAULT_ABI = [
-	{
-		name: 'deposit',
-		type: 'function',
-		stateMutability: 'nonpayable',
-		inputs: [
-			{ name: 'assets', type: 'uint256' },
-			{ name: 'receiver', type: 'address' },
-		],
-		outputs: [{ name: 'shares', type: 'uint256' }],
-	},
-	{
-		name: 'previewDeposit',
-		type: 'function',
-		stateMutability: 'view',
-		inputs: [{ name: 'assets', type: 'uint256' }],
-		outputs: [{ name: 'shares', type: 'uint256' }],
-	},
-] as const;
-
 export function DepositModal({
 	isOpen,
 	onOpenChange,
@@ -110,600 +39,210 @@ export function DepositModal({
 }: DepositModalProps) {
 	const [selectedToken, setSelectedToken] = useState<string>('');
 	const [amount, setAmount] = useState<string>('');
-	const [needsApproval, setNeedsApproval] = useState(false);
 	const [showSuccess, setShowSuccess] = useState(false);
 	const [depositData, setDepositData] = useState<{
 		tokenName: string;
 		amount: string;
 		usdValue: string;
 		vaultName: string;
-		blockchain: string;
-		txHash: string;
-		chainId: number;
 	} | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
 
-	const { address: userAddress } = useAccount();
+	// Mock token balances for demo
+	const mockBalances = {
+		USDC: '5000.00',
+		USDT: '2500.00',
+		DAI: '1500.00',
+		WETH: '25.00',
+		WBTC: '2.50',
+		FLOW: '10000.00',
+		DOGEMOON: '1250000.00',
+		PEPE: '50000.00',
+		SHIB2: '200000.00',
+		CAT: '8333.00',
+		BANANA: '16667.00',
+		ROCKET: '62500.00',
+		DIAMOND: '50000.00',
+		LAMBO: '250000.00',
+		DAO: '5000.00',
+	};
 
-	// Separate hooks for approval and deposit transactions
-	const {
-		writeContract: writeApproval,
-		data: approvalHash,
-		isPending: isApprovalPending,
-	} = useWriteContract();
-
-	const {
-		writeContract: writeDeposit,
-		data: depositHash,
-		isPending: isDepositPending,
-	} = useWriteContract();
-
-	// Get allowed tokens for this vault
 	const getAllowedTokens = () => {
-		// All vaults now only support USDC
-		return ['MockUSDC'];
+		return Object.keys(mockBalances);
 	};
 
-	const allowedTokens = vault ? getAllowedTokens() : [];
-
-	// Helper function to map blockchain names to contract chain names
 	const getBlockchainName = (blockchain: string | undefined) => {
-		if (!blockchain) return 'flowTestnet';
-
-		const lowerBlockchain = blockchain.toLowerCase();
-
-		if (lowerBlockchain.includes('flow')) {
-			return 'flowTestnet';
-		} else if (lowerBlockchain.includes('rootstock')) {
-			return 'rootstockTestnet';
-		} else {
-			// Default to flowTestnet
-			return 'flowTestnet';
-		}
-	};
-
-	// Get token addresses
-	const selectedTokenAddress = selectedToken
-		? getTokenAddress(
-				getBlockchainName(vault?.blockchain),
-				selectedToken as TokenName
-		  )
-		: null;
-
-	const selectedTokenConfig = selectedToken
-		? getTokenConfig(selectedToken as TokenName)
-		: null;
-
-	// Parse amount based on token decimals
-	const parsedAmount =
-		selectedTokenConfig && amount
-			? parseUnits(amount, selectedTokenConfig.decimals)
-			: BigInt(0);
-
-	// Read user's token balance
-	const { data: tokenBalance } = useReadContract({
-		address: selectedTokenAddress as Address,
-		abi: ERC20_ABI,
-		functionName: 'balanceOf',
-		args: userAddress ? [userAddress] : undefined,
-		query: { enabled: !!selectedTokenAddress && !!userAddress },
-	});
-
-	// Read current allowance
-	const { data: currentAllowance, refetch: refetchAllowance } = useReadContract(
-		{
-			address: selectedTokenAddress as Address,
-			abi: ERC20_ABI,
-			functionName: 'allowance',
-			args:
-				userAddress && vault
-					? [userAddress, vault.contractAddress as Address]
-					: undefined,
-			query: { enabled: !!selectedTokenAddress && !!userAddress && !!vault },
-		}
-	);
-
-	// Preview shares directly from the amount (since we're depositing the token directly)
-	const { data: expectedShares } = useReadContract({
-		address: vault?.contractAddress as Address,
-		abi: VAULT_ABI,
-		functionName: 'previewDeposit',
-		args: parsedAmount > BigInt(0) ? [parsedAmount] : undefined,
-		query: { enabled: parsedAmount > BigInt(0) && !!vault },
-	});
-
-	// Wait for approval transaction confirmation
-	const { isLoading: isApprovalConfirming, isSuccess: isApprovalSuccess } =
-		useWaitForTransactionReceipt({
-			hash: approvalHash,
-		});
-
-	// Wait for deposit transaction confirmation
-	const { isLoading: isDepositConfirming, isSuccess: isDepositSuccess } =
-		useWaitForTransactionReceipt({
-			hash: depositHash,
-		});
-
-	// Check if approval is needed
-	useEffect(() => {
-		if (currentAllowance !== undefined && parsedAmount > BigInt(0)) {
-			setNeedsApproval(currentAllowance < parsedAmount);
-		} else {
-			setNeedsApproval(false);
-		}
-	}, [currentAllowance, parsedAmount]);
-
-	// Refetch allowance after successful approval
-	useEffect(() => {
-		if (isApprovalSuccess) {
-			// Immediate refetch
-			refetchAllowance();
-
-			// Additional refetch after a short delay to ensure blockchain state is updated
-			const timeout = setTimeout(() => {
-				refetchAllowance();
-			}, 2000);
-
-			return () => clearTimeout(timeout);
-		}
-	}, [isApprovalSuccess, refetchAllowance]);
-
-	// Reset form when modal closes
-	useEffect(() => {
-		if (!isOpen) {
-			setSelectedToken('');
-			setAmount('');
-			setNeedsApproval(false);
-		}
-	}, [isOpen]);
-
-	const formatBalance = (balance: bigint, decimals: number) => {
-		return parseFloat(formatUnits(balance, decimals)).toFixed(4);
-	};
-
-	// Calculate approximate USD value based on token
-	const getApproximateUSDValue = (tokenName: string, amount: string) => {
-		const numAmount = parseFloat(amount);
-		if (isNaN(numAmount)) return '$0.00';
-
-		// Simple price approximations for demo
-		switch (tokenName) {
-			case 'MockUSDC':
-				return `$${numAmount.toFixed(2)}`;
-			case 'MockWBTC':
-				return `$${(numAmount * 45000).toLocaleString('en-US', {
-					minimumFractionDigits: 2,
-					maximumFractionDigits: 2,
-				})}`;
-			case 'MockWETH':
-				return `$${(numAmount * 2500).toLocaleString('en-US', {
-					minimumFractionDigits: 2,
-					maximumFractionDigits: 2,
-				})}`;
+		switch (blockchain) {
+			case 'Flow Testnet':
+				return '🌊 Flow Testnet';
+			case 'Rootstock Testnet':
+				return '₿ Rootstock Testnet';
 			default:
-				return `$${numAmount.toFixed(2)}`;
+				return blockchain;
 		}
 	};
-
-	// Close modal on successful deposit and show success screen
-	useEffect(() => {
-		if (isDepositSuccess && depositHash && vault) {
-			// Prepare success data
-			const successData = {
-				tokenName: selectedToken,
-				amount: amount,
-				usdValue: getApproximateUSDValue(selectedToken, amount),
-				vaultName: vault.name,
-				blockchain: vault.blockchain,
-				txHash: depositHash,
-				chainId: vault.chainId,
-			};
-
-			setDepositData(successData);
-
-			// Small delay to show success state before showing success modal
-			setTimeout(() => {
-				onOpenChange(false);
-				setShowSuccess(true);
-			}, 1000);
-		}
-	}, [
-		isDepositSuccess,
-		depositHash,
-		vault,
-		selectedToken,
-		amount,
-		expectedShares,
-		onOpenChange,
-	]);
-
-	const handleApprove = async () => {
-		if (!selectedTokenAddress || !vault || parsedAmount === BigInt(0)) return;
-
-		try {
-			writeApproval({
-				address: selectedTokenAddress as Address,
-				abi: ERC20_ABI,
-				functionName: 'approve',
-				args: [vault.contractAddress as Address, parsedAmount],
-			});
-		} catch (error) {
-			console.error('Approval failed:', error);
-		}
-	};
-
-	const handleDeposit = async () => {
-		if (
-			!vault ||
-			!selectedTokenAddress ||
-			!userAddress ||
-			parsedAmount === BigInt(0)
-		)
-			return;
-
-		try {
-			// Always use standard ERC4626 deposit function for all tokens
-			writeDeposit({
-				address: vault.contractAddress as Address,
-				abi: VAULT_ABI,
-				functionName: 'deposit',
-				args: [parsedAmount, userAddress],
-			});
-		} catch (error) {
-			console.error('Deposit failed:', error);
-		}
-	};
-
-	const isFormValid =
-		selectedToken && amount && parseFloat(amount) > 0 && userAddress;
-	const hasInsufficientBalance = tokenBalance && parsedAmount > tokenBalance;
-
-	// Button states
-	// ALL tokens need approval before deposit - no exceptions
-	const isApprovalNeeded = true; // Always require approval for any token
-	const actuallyNeedsApproval = needsApproval && isApprovalNeeded;
-	const isApprovalInProgress = isApprovalPending || isApprovalConfirming;
-	const isDepositInProgress = isDepositPending || isDepositConfirming;
-
-	// Approval flow: force approval first for ALL tokens
-	const showApprovalButton =
-		actuallyNeedsApproval && isFormValid && !hasInsufficientBalance;
-	const showDepositButton =
-		!actuallyNeedsApproval && isFormValid && !hasInsufficientBalance;
 
 	const getBlockchainColor = (blockchain: string) => {
 		switch (blockchain) {
 			case 'Flow Testnet':
-				return 'from-green-400 to-emerald-500';
+				return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
 			case 'Rootstock Testnet':
-				return 'from-orange-400 to-red-500';
+				return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
 			default:
-				return 'from-gray-400 to-gray-500';
+				return 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300';
 		}
 	};
 
-	if (!vault) return null;
+	const getApproximateUSDValue = (token: string, amount: string) => {
+		const tokenPrices: { [key: string]: number } = {
+			USDC: 1.0,
+			USDT: 1.0,
+			DAI: 1.0,
+			WETH: 3000.0,
+			WBTC: 45000.0,
+			FLOW: 0.5,
+			DOGEMOON: 0.001,
+			PEPE: 0.002,
+			SHIB2: 0.0005,
+			CAT: 0.003,
+			BANANA: 0.0015,
+			ROCKET: 0.0008,
+			DIAMOND: 0.002,
+			LAMBO: 0.0003,
+			DAO: 1.5,
+		};
+
+		const price = tokenPrices[token] || 0;
+		return (parseFloat(amount) * price).toFixed(2);
+	};
+
+	const handleDeposit = async () => {
+		if (!selectedToken || !amount || !vault) return;
+
+		setIsLoading(true);
+
+		// Simulate deposit transaction
+		await new Promise((resolve) => setTimeout(resolve, 2000));
+
+		setDepositData({
+			tokenName: selectedToken,
+			amount,
+			usdValue: getApproximateUSDValue(selectedToken, amount),
+			vaultName: vault.name,
+		});
+
+		setShowSuccess(true);
+		setIsLoading(false);
+	};
+
+	const handleClose = () => {
+		onOpenChange(false);
+		setShowSuccess(false);
+		setDepositData(null);
+		setAmount('');
+		setSelectedToken('');
+	};
+
+	if (showSuccess && depositData) {
+		return (
+			<DepositSuccess
+				isOpen={showSuccess}
+				onOpenChange={handleClose}
+				data={depositData}
+			/>
+		);
+	}
 
 	return (
-		<>
-			<Dialog open={isOpen} onOpenChange={onOpenChange}>
-				<DialogContent className='sm:max-w-lg'>
-					<DialogHeader>
-						<div className='flex items-center gap-3 justify-center'>
-							<div
-								className={`w-8 h-8 rounded-lg bg-gradient-to-br ${
-									vault
-										? getBlockchainColor(vault.blockchain)
-										: 'from-gray-500 to-gray-600'
-								} flex items-center justify-center`}
-							>
-								<span className='text-white font-bold text-sm'>
-									{vault?.blockchain === 'Flow Testnet' ? '🌊' : '₿'}
-								</span>
+		<Dialog open={isOpen} onOpenChange={onOpenChange}>
+			<DialogContent className='sm:max-w-md'>
+				<DialogHeader>
+					<DialogTitle className='text-center text-xl font-bold'>
+						Deposit to Vault
+					</DialogTitle>
+					<DialogDescription className='text-center text-slate-600 dark:text-slate-400'>
+						Add liquidity to earn yield
+					</DialogDescription>
+				</DialogHeader>
+
+				{vault && (
+					<div className='space-y-4 py-4'>
+						{/* Vault Info */}
+						<div className='p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50'>
+							<div className='flex items-center justify-between mb-2'>
+								<h3 className='font-semibold text-slate-900 dark:text-white'>
+									{vault.name}
+								</h3>
+								<Badge className={getBlockchainColor(vault.blockchain)}>
+									{getBlockchainName(vault.blockchain)}
+								</Badge>
 							</div>
-							<DialogTitle className='text-xl font-bold text-center'>
-								Deposit to {vault?.name}
-							</DialogTitle>
+							<p className='text-sm text-slate-600 dark:text-slate-400'>
+								Contract: {vault.contractAddress.slice(0, 6)}...
+								{vault.contractAddress.slice(-4)}
+							</p>
 						</div>
-						<DialogDescription className='text-center text-slate-600 dark:text-slate-400'>
-							Deposit tokens into your AI-powered vault for automated yield
-							optimization
-						</DialogDescription>
-					</DialogHeader>
 
-					<div className='space-y-6 py-4'>
-						{/* Wallet Connection Check */}
-						{!userAddress && (
-							<div className='relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 p-6 text-center'>
-								<div className='absolute inset-0 bg-blue-500/5'></div>
-								<div className='relative'>
-									<div className='w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-3'>
-										<span className='text-xl'>💼</span>
-									</div>
-									<h3 className='font-semibold text-blue-700 dark:text-blue-300 mb-1'>
-										Connect Your Wallet
-									</h3>
-									<p className='text-sm text-blue-600 dark:text-blue-400'>
-										Please connect your wallet to deposit into this vault
-									</p>
+						{/* Token Selection */}
+						<div className='space-y-2'>
+							<Label htmlFor='token'>Select Token</Label>
+							<select
+								id='token'
+								value={selectedToken}
+								onChange={(e) => setSelectedToken(e.target.value)}
+								className='w-full p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white'
+							>
+								<option value=''>Choose a token</option>
+								{getAllowedTokens().map((token) => (
+									<option key={token} value={token}>
+										{token} - Balance:{' '}
+										{mockBalances[token as keyof typeof mockBalances] || '0.00'}
+									</option>
+								))}
+							</select>
+						</div>
+
+						{/* Amount Input */}
+						<div className='space-y-2'>
+							<Label htmlFor='amount'>Amount</Label>
+							<Input
+								id='amount'
+								type='number'
+								placeholder='0.00'
+								value={amount}
+								onChange={(e) => setAmount(e.target.value)}
+								className='text-right'
+							/>
+							{selectedToken && amount && (
+								<div className='text-sm text-slate-500 dark:text-slate-400'>
+									≈ ${getApproximateUSDValue(selectedToken, amount)} USD
 								</div>
-							</div>
-						)}
+							)}
+						</div>
 
-						{/* Only show form if wallet connected */}
-						{userAddress && (
-							<>
-								{/* Token Selection */}
-								<div className='space-y-3'>
-									<Label htmlFor='token' className='text-base font-medium'>
-										Select Token
-									</Label>
-									<Select
-										value={selectedToken}
-										onValueChange={setSelectedToken}
-									>
-										<SelectTrigger className='h-12'>
-											<SelectValue placeholder='Choose a token to deposit' />
-										</SelectTrigger>
-										<SelectContent>
-											{allowedTokens.map((token) => {
-												const config = getTokenConfig(token as TokenName);
-												return (
-													<SelectItem key={token} value={token}>
-														<div className='flex items-center justify-between w-full'>
-															<span className='font-medium'>{token}</span>
-															{config && (
-																<Badge
-																	variant='neutral'
-																	className='ml-2 text-xs'
-																>
-																	{config.decimals} decimals
-																</Badge>
-															)}
-														</div>
-													</SelectItem>
-												);
-											})}
-										</SelectContent>
-									</Select>
-								</div>
+						{/* Demo Notice */}
+						<Alert>
+							<AlertDescription>
+								This is a demo version. No real transactions will be made.
+							</AlertDescription>
+						</Alert>
 
-								{/* Amount Input */}
-								{selectedToken && (
-									<div className='space-y-2'>
-										<div className='flex items-center justify-between'>
-											<Label htmlFor='amount'>Amount</Label>
-											{tokenBalance && selectedTokenConfig && (
-												<div className='text-right'>
-													<div className='text-sm text-slate-500'>
-														Balance:{' '}
-														{formatBalance(
-															tokenBalance,
-															selectedTokenConfig.decimals
-														)}{' '}
-														{selectedToken}
-													</div>
-													<Button
-														type='button'
-														variant='neutral'
-														size='sm'
-														className='h-auto p-1 text-xs'
-														onClick={() =>
-															setAmount(
-																formatBalance(
-																	tokenBalance,
-																	selectedTokenConfig.decimals
-																)
-															)
-														}
-													>
-														Max
-													</Button>
-												</div>
-											)}
-										</div>
-										<Input
-											disabled={tokenBalance === BigInt(0)}
-											id='amount'
-											type='number'
-											placeholder='0.0'
-											value={amount}
-											onChange={(e) => setAmount(e.target.value)}
-											step='any'
-											min='0'
-										/>
-
-										{tokenBalance === BigInt(0) && (
-											<Alert className='border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'>
-												<AlertDescription className='text-blue-700 dark:text-blue-300 text-sm'>
-													You don&apos;t have enough tokens to complete this
-													transaction. We recommend visiting the faucet to get
-													more tokens and proceed. To do so, simply click the
-													button below.
-													<div className='mt-4 flex justify-center'>
-														<Button
-															onClick={() => {
-																// Go to faucet
-																goToFaucet();
-															}}
-															variant='default'
-															className='bg-blue-600 hover:bg-blue-700 text-white'
-														>
-															Go to Faucet
-														</Button>
-													</div>
-												</AlertDescription>
-											</Alert>
-										)}
-
-										{hasInsufficientBalance && (
-											<Alert className='border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'>
-												<AlertDescription className='text-red-700 dark:text-red-300 text-sm'>
-													Insufficient balance. You have{' '}
-													{tokenBalance && selectedTokenConfig
-														? formatBalance(
-																tokenBalance,
-																selectedTokenConfig.decimals
-														  )
-														: '0'}{' '}
-													{selectedToken}
-												</AlertDescription>
-											</Alert>
-										)}
-									</div>
-								)}
-
-								{/* Preview */}
-								{expectedShares && selectedTokenConfig && (
-									<div className='space-y-3 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg'>
-										<h4 className='font-medium text-slate-900 dark:text-white'>
-											Preview
-										</h4>
-										<div className='space-y-2 text-sm'>
-											<div className='flex justify-between'>
-												<span className='text-slate-600 dark:text-slate-400'>
-													Deposit Amount:
-												</span>
-												<span className='font-medium'>
-													{amount} {selectedToken}
-												</span>
-											</div>
-											<div className='flex justify-between'>
-												<span className='text-slate-600 dark:text-slate-400'>
-													Est. USD Value:
-												</span>
-												<span className='font-medium'>
-													{getApproximateUSDValue(selectedToken, amount)}
-												</span>
-											</div>
-											<div className='flex justify-between'>
-												<span className='text-slate-600 dark:text-slate-400'>
-													Vault Shares:
-												</span>
-												<span className='font-medium'>
-													{formatBalance(expectedShares, 18)}
-												</span>
-											</div>
-										</div>
-									</div>
-								)}
-
-								{/* Action Buttons */}
-								<div className='space-y-3'>
-									{/* Step 1: Approval (required for ALL tokens) */}
-									{showApprovalButton && (
-										<div className='space-y-2'>
-											<div className='text-sm text-slate-600 dark:text-slate-400 text-center'>
-												Step 1: Approve {selectedToken} for vault access
-												<div className='text-xs text-slate-500 mt-1'>
-													(Required for all tokens)
-												</div>
-											</div>
-											<Button
-												onClick={handleApprove}
-												disabled={isApprovalInProgress}
-												className='w-full bg-orange-600 hover:bg-orange-700 text-white'
-											>
-												{isApprovalInProgress ? (
-													<div className='flex items-center gap-2'>
-														<div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
-														Approving {selectedToken}...
-													</div>
-												) : (
-													`Approve ${selectedToken}`
-												)}
-											</Button>
-										</div>
-									)}
-
-									{/* Step 2: Deposit (only available after approval) */}
-									{showDepositButton && (
-										<div className='space-y-2'>
-											<div className='text-sm text-green-600 dark:text-green-400 text-center'>
-												✅ {selectedToken} approved! Step 2: Deposit to vault
-											</div>
-											<Button
-												onClick={handleDeposit}
-												disabled={isDepositInProgress}
-												className='w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
-											>
-												{isDepositInProgress ? (
-													<div className='flex items-center gap-2'>
-														<div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
-														Depositing...
-													</div>
-												) : (
-													'Deposit'
-												)}
-											</Button>
-										</div>
-									)}
-
-									{/* Waiting for approval message */}
-									{actuallyNeedsApproval && !showApprovalButton && (
-										<div className='text-center text-sm text-slate-500 dark:text-slate-400 py-4'>
-											Please complete the form above to proceed with approval
-										</div>
-									)}
-								</div>
-
-								{/* Chain Info and Transaction Status */}
-								<div className='space-y-2'>
-									<div className='text-xs text-center text-slate-500 dark:text-slate-400'>
-										Depositing on {vault.blockchain} (Chain ID: {vault.chainId})
-									</div>
-
-									{/* Transaction Hashes */}
-									{approvalHash && (
-										<div className='text-xs text-center'>
-											<span className='text-slate-500'>Approval TX: </span>
-											<a
-												href={`https://${
-													vault.chainId === 31
-														? 'explorer.testnet.rsk.co'
-														: 'evm-testnet.flowscan.io'
-												}/tx/${approvalHash}`}
-												target='_blank'
-												rel='noopener noreferrer'
-												className='text-blue-500 hover:text-blue-600 font-mono'
-											>
-												{approvalHash.slice(0, 6)}...{approvalHash.slice(-4)}
-											</a>
-										</div>
-									)}
-
-									{depositHash && (
-										<div className='text-xs text-center'>
-											<span className='text-slate-500'>Deposit TX: </span>
-											<a
-												href={`https://${
-													vault.chainId === 31
-														? 'explorer.testnet.rsk.co'
-														: 'evm-testnet.flowscan.io'
-												}/tx/${depositHash}`}
-												target='_blank'
-												rel='noopener noreferrer'
-												className='text-blue-500 hover:text-blue-600 font-mono'
-											>
-												{depositHash.slice(0, 6)}...{depositHash.slice(-4)}
-											</a>
-										</div>
-									)}
-								</div>
-							</>
-						)}
+						{/* Action Buttons */}
+						<div className='flex gap-3 pt-4'>
+							<Button onClick={goToFaucet} variant='neutral' className='flex-1'>
+								Get Test Tokens
+							</Button>
+							<Button
+								onClick={handleDeposit}
+								disabled={!selectedToken || !amount || isLoading}
+								className='flex-1'
+							>
+								{isLoading ? 'Processing...' : 'Deposit'}
+							</Button>
+						</div>
 					</div>
-				</DialogContent>
-			</Dialog>
-			{showSuccess && depositData && (
-				<DepositSuccess
-					isOpen={showSuccess}
-					onClose={() => {
-						setShowSuccess(false);
-						setDepositData(null);
-					}}
-					depositData={depositData}
-				/>
-			)}
-		</>
+				)}
+			</DialogContent>
+		</Dialog>
 	);
 }

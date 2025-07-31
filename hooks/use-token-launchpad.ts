@@ -1,191 +1,186 @@
 'use client';
 
-import {
-	useAccount,
-	useChainId,
-	useReadContract,
-	useWriteContract,
-} from 'wagmi';
-import { formatEther, parseEther } from 'viem';
-import { getTokenLaunchpadFactoryAddressById } from '@/constants/contracts';
+import { useState, useEffect } from 'react';
 
-// Simplified ABIs for the launchpad contracts
-const TOKEN_LAUNCHPAD_FACTORY_ABI = [
+// Mock data for demonstration
+const MOCK_LAUNCHES = [
 	{
-		inputs: [
-			{ internalType: 'string', name: '_name', type: 'string' },
-			{ internalType: 'string', name: '_symbol', type: 'string' },
-			{ internalType: 'string', name: '_description', type: 'string' },
-			{ internalType: 'uint256', name: '_totalSupply', type: 'uint256' },
-			{ internalType: 'uint256', name: '_liquidityTarget', type: 'uint256' },
-			{ internalType: 'uint256', name: '_tokenPrice', type: 'uint256' },
-			{ internalType: 'string', name: '_website', type: 'string' },
-			{ internalType: 'string', name: '_twitter', type: 'string' },
-			{ internalType: 'string', name: '_telegram', type: 'string' },
-		],
-		name: 'createTokenLaunch',
-		outputs: [{ internalType: 'address', name: '', type: 'address' }],
-		stateMutability: 'nonpayable',
-		type: 'function',
+		address: '0x1234567890123456789012345678901234567890',
+		name: 'DogeMoon',
+		symbol: 'DOGEMOON',
+		description: 'The next big meme coin to the moon! 🚀🐕',
+		creator: '0xDemoCreator123456789012345678901234567890',
+		liquidityTarget: '100',
+		liquidityRaised: '75',
+		tokenPrice: '0.001',
+		totalSupply: '1000000',
+		isLive: true,
+		isCompleted: false,
+		isFailed: false,
+		website: 'https://dogemoon.com',
+		twitter: 'https://twitter.com/dogemoon',
+		telegram: 'https://t.me/dogemoon',
+		contributorCount: 150,
+		progress: 75,
+		marketCap: '75000',
+		userContribution: '0',
+		userTokens: '0',
 	},
 	{
-		inputs: [],
-		name: 'getAllLaunches',
-		outputs: [{ internalType: 'address[]', name: '', type: 'address[]' }],
-		stateMutability: 'view',
-		type: 'function',
+		address: '0x2345678901234567890123456789012345678901',
+		name: 'PepeCoin',
+		symbol: 'PEPE',
+		description: 'The original Pepe meme token. Rare Pepe vibes only! 🐸',
+		creator: '0xTestCreator123456789012345678901234567890',
+		liquidityTarget: '50',
+		liquidityRaised: '50',
+		tokenPrice: '0.002',
+		totalSupply: '500000',
+		isLive: false,
+		isCompleted: true,
+		isFailed: false,
+		website: 'https://pepecoin.com',
+		twitter: 'https://twitter.com/pepecoin',
+		telegram: 'https://t.me/pepecoin',
+		contributorCount: 200,
+		progress: 100,
+		marketCap: '100000',
+		userContribution: '0',
+		userTokens: '0',
 	},
 	{
-		inputs: [{ internalType: 'address', name: 'creator', type: 'address' }],
-		name: 'getCreatorLaunches',
-		outputs: [{ internalType: 'address[]', name: '', type: 'address[]' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-] as const;
-
-const LAUNCHPAD_TOKEN_ABI = [
-	{
-		inputs: [],
-		name: 'name',
-		outputs: [{ internalType: 'string', name: '', type: 'string' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'symbol',
-		outputs: [{ internalType: 'string', name: '', type: 'string' }],
-		stateMutability: 'view',
-		type: 'function',
+		address: '0x3456789012345678901234567890123456789012',
+		name: 'ShibaInu2',
+		symbol: 'SHIB2',
+		description: 'The second coming of Shiba Inu! Woof woof! 🐕',
+		creator: '0xShibaCreator123456789012345678901234567890',
+		liquidityTarget: '200',
+		liquidityRaised: '180',
+		tokenPrice: '0.0005',
+		totalSupply: '2000000',
+		isLive: true,
+		isCompleted: false,
+		isFailed: false,
+		website: 'https://shiba2.com',
+		twitter: 'https://twitter.com/shiba2',
+		telegram: 'https://t.me/shiba2',
+		contributorCount: 300,
+		progress: 90,
+		marketCap: '90000',
+		userContribution: '0',
+		userTokens: '0',
 	},
 	{
-		inputs: [],
-		name: 'description',
-		outputs: [{ internalType: 'string', name: '', type: 'string' }],
-		stateMutability: 'view',
-		type: 'function',
+		address: '0x4567890123456789012345678901234567890123',
+		name: 'CatCoin',
+		symbol: 'CAT',
+		description: 'Meow! The purr-fect meme coin for cat lovers! 😺',
+		creator: '0xCatLover123456789012345678901234567890',
+		liquidityTarget: '75',
+		liquidityRaised: '25',
+		tokenPrice: '0.003',
+		totalSupply: '750000',
+		isLive: true,
+		isCompleted: false,
+		isFailed: false,
+		website: 'https://catcoin.com',
+		twitter: 'https://twitter.com/catcoin',
+		telegram: 'https://t.me/catcoin',
+		contributorCount: 80,
+		progress: 33,
+		marketCap: '25000',
+		userContribution: '0',
+		userTokens: '0',
 	},
 	{
-		inputs: [],
-		name: 'creator',
-		outputs: [{ internalType: 'address', name: '', type: 'address' }],
-		stateMutability: 'view',
-		type: 'function',
+		address: '0x5678901234567890123456789012345678901234',
+		name: 'BananaToken',
+		symbol: 'BANANA',
+		description: 'Going bananas! The most ape-tastic token around! 🍌',
+		creator: '0xApeTrader123456789012345678901234567890',
+		liquidityTarget: '150',
+		liquidityRaised: '120',
+		tokenPrice: '0.0015',
+		totalSupply: '1500000',
+		isLive: true,
+		isCompleted: false,
+		isFailed: false,
+		website: 'https://bananatoken.com',
+		twitter: 'https://twitter.com/bananatoken',
+		telegram: 'https://t.me/bananatoken',
+		contributorCount: 250,
+		progress: 80,
+		marketCap: '180000',
+		userContribution: '0',
+		userTokens: '0',
 	},
 	{
-		inputs: [],
-		name: 'liquidityTarget',
-		outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
+		address: '0x6789012345678901234567890123456789012345',
+		name: 'RocketMoon',
+		symbol: 'ROCKET',
+		description: 'To infinity and beyond! 🚀🌙',
+		creator: '0xSpaceExplorer123456789012345678901234567890',
+		liquidityTarget: '300',
+		liquidityRaised: '50',
+		tokenPrice: '0.0008',
+		totalSupply: '3000000',
+		isLive: true,
+		isCompleted: false,
+		isFailed: false,
+		website: 'https://rocketmoon.com',
+		twitter: 'https://twitter.com/rocketmoon',
+		telegram: 'https://t.me/rocketmoon',
+		contributorCount: 120,
+		progress: 17,
+		marketCap: '40000',
+		userContribution: '0',
+		userTokens: '0',
 	},
 	{
-		inputs: [],
-		name: 'liquidityRaised',
-		outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
+		address: '0x7890123456789012345678901234567890123456',
+		name: 'DiamondHands',
+		symbol: 'DIAMOND',
+		description: '💎🙌 Diamond hands only! HODL forever!',
+		creator: '0xDiamondHands123456789012345678901234567890',
+		liquidityTarget: '100',
+		liquidityRaised: '100',
+		tokenPrice: '0.002',
+		totalSupply: '1000000',
+		isLive: false,
+		isCompleted: true,
+		isFailed: false,
+		website: 'https://diamondhands.com',
+		twitter: 'https://twitter.com/diamondhands',
+		telegram: 'https://t.me/diamondhands',
+		contributorCount: 180,
+		progress: 100,
+		marketCap: '200000',
+		userContribution: '0',
+		userTokens: '0',
 	},
 	{
-		inputs: [],
-		name: 'tokenPrice',
-		outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
+		address: '0x8901234567890123456789012345678901234567',
+		name: 'LamboToken',
+		symbol: 'LAMBO',
+		description: 'When Lambo? Now! 🏎️💨',
+		creator: '0xLamboDreamer123456789012345678901234567890',
+		liquidityTarget: '500',
+		liquidityRaised: '75',
+		tokenPrice: '0.0003',
+		totalSupply: '5000000',
+		isLive: true,
+		isCompleted: false,
+		isFailed: false,
+		website: 'https://lambotoken.com',
+		twitter: 'https://twitter.com/lambotoken',
+		telegram: 'https://t.me/lambotoken',
+		contributorCount: 400,
+		progress: 15,
+		marketCap: '75000',
+		userContribution: '0',
+		userTokens: '0',
 	},
-	{
-		inputs: [],
-		name: 'totalTokenSupply',
-		outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'isLive',
-		outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'isCompleted',
-		outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'isFailed',
-		outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'website',
-		outputs: [{ internalType: 'string', name: '', type: 'string' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'twitter',
-		outputs: [{ internalType: 'string', name: '', type: 'string' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'telegram',
-		outputs: [{ internalType: 'string', name: '', type: 'string' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'getContributorCount',
-		outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'getProgress',
-		outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'getMarketCap',
-		outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [{ internalType: 'address', name: '', type: 'address' }],
-		name: 'contributions',
-		outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
-		name: 'balanceOf',
-		outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [],
-		name: 'buyTokens',
-		outputs: [],
-		stateMutability: 'payable',
-		type: 'function',
-	},
-] as const;
+];
 
 export interface TokenLaunchData {
 	address: string;
@@ -211,22 +206,18 @@ export interface TokenLaunchData {
 }
 
 export function useTokenLaunchpadFactory() {
-	const chainId = useChainId();
-	const { writeContract, isPending: isCreating } = useWriteContract();
+	const [launches, setLaunches] = useState<TokenLaunchData[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
-	const factoryAddress = getTokenLaunchpadFactoryAddressById(chainId);
+	useEffect(() => {
+		// Simulate loading
+		setTimeout(() => {
+			setLaunches(MOCK_LAUNCHES);
+			setIsLoading(false);
+		}, 1000);
+	}, []);
 
-	// Get all launches
-	const { data: launchAddresses, refetch: refetchLaunches } = useReadContract({
-		address: factoryAddress as `0x${string}`,
-		abi: TOKEN_LAUNCHPAD_FACTORY_ABI,
-		functionName: 'getAllLaunches',
-		query: {
-			enabled: !!factoryAddress,
-		},
-	});
-
-	// Create a new token launch
 	const createTokenLaunch = async (
 		name: string,
 		symbol: string,
@@ -238,265 +229,120 @@ export function useTokenLaunchpadFactory() {
 		twitter: string,
 		telegram: string
 	) => {
-		if (!factoryAddress) throw new Error('Factory not deployed on this chain');
-
 		try {
-			await writeContract({
-				address: factoryAddress as `0x${string}`,
-				abi: TOKEN_LAUNCHPAD_FACTORY_ABI,
-				functionName: 'createTokenLaunch',
-				args: [
-					name,
-					symbol,
-					description,
-					BigInt(totalSupply),
-					parseEther(liquidityTargetEth.toString()),
-					parseEther(tokenPriceEth.toString()),
-					website,
-					twitter,
-					telegram,
-				],
-			});
-		} catch (error) {
-			console.error('Error creating token launch:', error);
-			throw error;
+			// Simulate API call
+			await new Promise((resolve) => setTimeout(resolve, 2000));
+
+			const newLaunch: TokenLaunchData = {
+				address: `0x${Math.random().toString(16).slice(2, 42)}`,
+				name,
+				symbol,
+				description,
+				creator: '0xDemoCreator123456789012345678901234567890',
+				liquidityTarget: liquidityTargetEth.toString(),
+				liquidityRaised: '0',
+				tokenPrice: tokenPriceEth.toString(),
+				totalSupply: totalSupply.toString(),
+				isLive: true,
+				isCompleted: false,
+				isFailed: false,
+				website,
+				twitter,
+				telegram,
+				contributorCount: 0,
+				progress: 0,
+				marketCap: '0',
+				userContribution: '0',
+				userTokens: '0',
+			};
+
+			setLaunches((prev) => [newLaunch, ...prev]);
+			return newLaunch.address;
+		} catch (err) {
+			setError('Failed to create token launch');
+			throw err;
 		}
 	};
 
-	// Simple function to create launch data for UI (since we can't make multiple useTokenLaunch calls dynamically)
 	const getLaunchesForUI = () => {
-		if (!Array.isArray(launchAddresses)) return [];
-
-		return launchAddresses.map((address, index) => ({
-			id: address,
-			name: `Token Launch ${index + 1}`,
-			symbol: `TKN${index + 1}`,
-			description: `A new token launch on the platform`,
-			creator: '0x1234...5678',
-			totalSupply: 1000000,
-			currentPrice: 0.001 + index * 0.0005,
-			marketCap: 1000000 * (0.001 + index * 0.0005),
-			liquidityRaised: Math.random() * 50000,
-			liquidityTarget: 100000,
-			participantCount: Math.floor(Math.random() * 200) + 10,
-			launchDate: new Date(),
-			status: ['live', 'upcoming', 'completed'][
-				Math.floor(Math.random() * 3)
-			] as 'live' | 'upcoming' | 'completed',
-			category: 'DeFi',
-			website: '',
-			twitter: '',
-			telegram: '',
-			logo: '/api/placeholder/64/64',
-			priceChange24h: Math.random() * 20 - 10, // -10 to +10
-			marketScore: Math.floor(Math.random() * 40) + 60, // 60-100
-		}));
+		return launches;
 	};
 
 	return {
-		factoryAddress,
-		launchAddresses: launchAddresses || [],
-		launches: getLaunchesForUI(),
+		launches,
+		isLoading,
+		error,
 		createTokenLaunch,
-		isCreating,
-		refetchLaunches,
+		getLaunchesForUI,
 	};
 }
 
 export function useTokenLaunch(launchAddress: string) {
-	const { address: userAddress } = useAccount();
-	const { writeContract, isPending: isBuying } = useWriteContract();
+	const [launch, setLaunch] = useState<TokenLaunchData | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
-	// Read basic token data
-	const { data: name } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'name',
-		query: { enabled: !!launchAddress },
-	});
+	useEffect(() => {
+		// Simulate loading
+		setTimeout(() => {
+			const foundLaunch = MOCK_LAUNCHES.find(
+				(l) => l.address === launchAddress
+			);
+			if (foundLaunch) {
+				setLaunch(foundLaunch);
+			} else {
+				setError('Launch not found');
+			}
+			setIsLoading(false);
+		}, 1000);
+	}, [launchAddress]);
 
-	const { data: symbol } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'symbol',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: description } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'description',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: creator } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'creator',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: liquidityTarget } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'liquidityTarget',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: liquidityRaised } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'liquidityRaised',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: tokenPrice } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'tokenPrice',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: totalSupply } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'totalTokenSupply',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: isLive } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'isLive',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: isCompleted } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'isCompleted',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: isFailed } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'isFailed',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: website } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'website',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: twitter } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'twitter',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: telegram } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'telegram',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: contributorCount } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'getContributorCount',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: progress } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'getProgress',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: marketCap } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'getMarketCap',
-		query: { enabled: !!launchAddress },
-	});
-
-	const { data: userContribution } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'contributions',
-		args: [userAddress as `0x${string}`],
-		query: { enabled: !!launchAddress && !!userAddress },
-	});
-
-	const { data: userTokens } = useReadContract({
-		address: launchAddress as `0x${string}`,
-		abi: LAUNCHPAD_TOKEN_ABI,
-		functionName: 'balanceOf',
-		args: [userAddress as `0x${string}`],
-		query: { enabled: !!launchAddress && !!userAddress },
-	});
-
-	// Buy tokens
 	const buyTokens = async (amountEth: number) => {
-		if (!launchAddress) throw new Error('Invalid launch address');
+		if (!launch) throw new Error('Launch not found');
 
 		try {
-			await writeContract({
-				address: launchAddress as `0x${string}`,
-				abi: LAUNCHPAD_TOKEN_ABI,
-				functionName: 'buyTokens',
-				value: parseEther(amountEth.toString()),
-			});
-		} catch (error) {
-			console.error('Error buying tokens:', error);
-			throw error;
+			// Simulate transaction
+			await new Promise((resolve) => setTimeout(resolve, 2000));
+
+			// Update the launch data
+			const updatedLaunch = {
+				...launch,
+				liquidityRaised: (
+					parseFloat(launch.liquidityRaised) + amountEth
+				).toString(),
+				contributorCount: launch.contributorCount + 1,
+				progress: Math.min(
+					100,
+					((parseFloat(launch.liquidityRaised) + amountEth) /
+						parseFloat(launch.liquidityTarget)) *
+						100
+				),
+				userContribution: (
+					parseFloat(launch.userContribution) + amountEth
+				).toString(),
+				userTokens: (
+					parseFloat(launch.userTokens) +
+					amountEth / parseFloat(launch.tokenPrice)
+				).toString(),
+			};
+
+			setLaunch(updatedLaunch);
+			return true;
+		} catch (err) {
+			setError('Failed to buy tokens');
+			throw err;
 		}
 	};
 
-	// Combine all data
-	const launchData: TokenLaunchData | null =
-		name &&
-		symbol &&
-		description &&
-		creator &&
-		liquidityTarget &&
-		liquidityRaised &&
-		tokenPrice &&
-		totalSupply
-			? {
-					address: launchAddress,
-					name,
-					symbol,
-					description,
-					creator,
-					liquidityTarget: formatEther(liquidityTarget),
-					liquidityRaised: formatEther(liquidityRaised),
-					tokenPrice: formatEther(tokenPrice),
-					totalSupply: formatEther(totalSupply),
-					isLive: isLive || false,
-					isCompleted: isCompleted || false,
-					isFailed: isFailed || false,
-					website: website || '',
-					twitter: twitter || '',
-					telegram: telegram || '',
-					contributorCount: Number(contributorCount || 0),
-					progress: Number(progress || 0),
-					marketCap: formatEther(marketCap || BigInt(0)),
-					userContribution: formatEther(userContribution || BigInt(0)),
-					userTokens: formatEther(userTokens || BigInt(0)),
-			  }
-			: null;
+	const getLaunchDetails = () => {
+		return launch;
+	};
 
 	return {
-		launchData,
+		launch,
+		isLoading,
+		error,
 		buyTokens,
-		isBuying,
+		getLaunchDetails,
 	};
 }

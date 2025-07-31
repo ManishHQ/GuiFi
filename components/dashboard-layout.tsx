@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { NavBar } from '@/components/nav-bar';
-import { getVaultAddress } from '@/constants/contracts';
-import { useChainId } from 'wagmi';
+import Image from 'next/image';
+// import { useChainId } from 'wagmi';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -34,9 +34,7 @@ const REAL_VAULTS: VaultData[] = [
 		description: 'Optimized yield strategies for USDC on Flow Testnet',
 		blockchain: 'Flow Testnet',
 		chainId: 545,
-		contractAddress:
-			getVaultAddress('flowTestnet', 'MultiTokenVault') ||
-			'0x7C65F77a4EbEa3D56368A73A12234bB4384ACB28',
+		contractAddress: '0x7C65F77a4EbEa3D56368A73A12234bB4384ACB28',
 		apy: 16.5,
 		tvl: 450000,
 		riskLevel: 'High',
@@ -51,26 +49,104 @@ const REAL_VAULTS: VaultData[] = [
 		supportedTokens: ['USDC', 'FLOW'],
 	},
 	{
-		id: 'rootstock-testnet-multi-token-vault',
-		name: 'Rootstock Testnet Multi-Token Vault',
-		description: 'Bitcoin-secured DeFi yield strategies on Rootstock Testnet',
-		blockchain: 'Rootstock Testnet',
-		chainId: 31,
-		contractAddress:
-			getVaultAddress('rootstockTestnet', 'MultiTokenVault') ||
-			'0x8A2F3B1c5D6E7F9A0B3C4D5E6F7G8H9I0J1K2L3M',
-		apy: 18.2,
+		id: 'defi-yield-vault',
+		name: 'DeFi Yield Vault',
+		description: 'High-yield DeFi strategies across multiple protocols',
+		blockchain: 'Flow Testnet',
+		chainId: 545,
+		contractAddress: '0x8fDE7A649c782c96e7f4D9D88490a7C5031F51a9',
+		apy: 22.8,
 		tvl: 320000,
-		riskLevel: 'High',
-		strategy: 'BTC-backed Yield Generation',
-		performance: 15.8,
-		deposits: 120000,
+		riskLevel: 'Very High',
+		strategy: 'Multi-Protocol Yield Farming',
+		performance: 18.5,
+		deposits: 150000,
 		allocation: {
-			'BTC Staking': 50,
-			'DeFi Protocols': 30,
-			'Liquidity Mining': 20,
+			'Liquidity Mining': 45,
+			'Staking Rewards': 30,
+			'Flash Loans': 25,
 		},
-		supportedTokens: ['RBTC', 'USDT'],
+		supportedTokens: ['USDC', 'WETH', 'WBTC'],
+	},
+	{
+		id: 'stable-yield-vault',
+		name: 'Stable Yield Vault',
+		description: 'Conservative yield strategies for stable assets',
+		blockchain: 'Flow Testnet',
+		chainId: 545,
+		contractAddress: '0x9aBcDeF123456789012345678901234567890abcd',
+		apy: 8.2,
+		tvl: 780000,
+		riskLevel: 'Low',
+		strategy: 'Stable Asset Optimization',
+		performance: 7.8,
+		deposits: 320000,
+		allocation: {
+			'Money Markets': 60,
+			'Stable Pools': 25,
+			Bonds: 15,
+		},
+		supportedTokens: ['USDC', 'USDT', 'DAI'],
+	},
+	{
+		id: 'meme-token-vault',
+		name: 'Meme Token Vault',
+		description: 'High-risk, high-reward meme token strategies',
+		blockchain: 'Flow Testnet',
+		chainId: 545,
+		contractAddress: '0xBeF123456789012345678901234567890abcdef',
+		apy: 45.2,
+		tvl: 120000,
+		riskLevel: 'Extreme',
+		strategy: 'Meme Token Trading',
+		performance: 38.7,
+		deposits: 45000,
+		allocation: {
+			'Meme Trading': 70,
+			'Liquidity Provision': 20,
+			Staking: 10,
+		},
+		supportedTokens: ['DOGEMOON', 'PEPE', 'SHIB2'],
+	},
+	{
+		id: 'ai-trading-vault',
+		name: 'AI Trading Vault',
+		description: 'AI-powered algorithmic trading strategies',
+		blockchain: 'Flow Testnet',
+		chainId: 545,
+		contractAddress: '0xC0de123456789012345678901234567890c0de',
+		apy: 28.5,
+		tvl: 280000,
+		riskLevel: 'High',
+		strategy: 'AI Algorithmic Trading',
+		performance: 24.3,
+		deposits: 110000,
+		allocation: {
+			'Algorithmic Trading': 50,
+			'Market Making': 30,
+			Arbitrage: 20,
+		},
+		supportedTokens: ['USDC', 'WETH', 'WBTC', 'FLOW'],
+	},
+	{
+		id: 'dao-treasury-vault',
+		name: 'DAO Treasury Vault',
+		description: 'Treasury management for DAO governance tokens',
+		blockchain: 'Flow Testnet',
+		chainId: 545,
+		contractAddress: '0xDa0123456789012345678901234567890da0',
+		apy: 12.4,
+		tvl: 650000,
+		riskLevel: 'Medium',
+		strategy: 'DAO Treasury Management',
+		performance: 11.9,
+		deposits: 280000,
+		allocation: {
+			'Governance Staking': 40,
+			'Liquidity Pools': 35,
+			'Reserve Assets': 25,
+		},
+		supportedTokens: ['USDC', 'FLOW', 'DAO'],
 	},
 ];
 
@@ -81,7 +157,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const [selectedVault, setSelectedVault] = useState<VaultData | null>(null);
-	const chainId = useChainId();
+	const chainId = 545; // Demo chain ID
 	const pathname = usePathname();
 
 	// Filter vaults based on current chain
@@ -117,8 +193,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 				<div className='lg:hidden'>
 					<div className='flex items-center justify-between p-4 border-b border-slate-200/60 dark:border-slate-800/60 bg-white/95 dark:bg-slate-950/95'>
 						<div className='flex items-center gap-3'>
-							<div className='w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center'>
-								<span className='text-white font-bold text-sm'>GUI</span>
+							<div className='w-8 h-8 rounded-lg bg-gradient-to-br  flex items-center justify-center'>
+								<Image
+									src='/logo.png'
+									alt='GuiVerse Logo'
+									width={32}
+									height={32}
+								/>
 							</div>
 							<div>
 								<h1 className='font-bold text-lg text-slate-900 dark:text-white'>
@@ -223,8 +304,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 				<div className='hidden lg:block w-80 flex-shrink-0 border-r border-slate-200/60 dark:border-slate-800/60 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm fixed left-0 top-0 h-screen z-40'>
 					<div className='p-6 h-full overflow-y-auto'>
 						<div className='flex items-center gap-3 mb-8'>
-							<div className='w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center'>
-								<span className='text-white font-bold text-lg'>GUI</span>
+							<div className='w-10 h-10 rounded-lg bg-gradient-to-br flex items-center justify-center'>
+								<Image
+									src='/logo.png'
+									alt='GuiVerse Logo'
+									className='w-full h-full object-cover'
+									width={32}
+									height={32}
+								/>
 							</div>
 							<div>
 								<h1 className='font-bold text-xl text-slate-900 dark:text-white'>
