@@ -388,7 +388,7 @@ export function UserPositions() {
 												Yes Bets:
 											</span>
 											<span className='font-medium'>
-												{prediction.yesBets} ETH
+												{prediction.yesBets} GUI
 											</span>
 										</div>
 										<div className='flex justify-between text-sm'>
@@ -396,7 +396,7 @@ export function UserPositions() {
 												No Bets:
 											</span>
 											<span className='font-medium'>
-												{prediction.noBets} ETH
+												{prediction.noBets} GUI
 											</span>
 										</div>
 										<div className='flex justify-between text-sm'>
@@ -404,7 +404,7 @@ export function UserPositions() {
 												Total:
 											</span>
 											<span className='font-medium'>
-												{prediction.totalBets} ETH
+												{prediction.totalBets} GUI
 											</span>
 										</div>
 										<div className='flex justify-between text-sm'>
@@ -472,7 +472,7 @@ export function UserPositions() {
 												Raised:
 											</span>
 											<span className='font-medium'>
-												{launch.liquidityRaised} / {launch.liquidityTarget} ETH
+												{launch.liquidityRaised} / {launch.liquidityTarget} GUI
 											</span>
 										</div>
 										<div className='flex justify-between text-sm'>
@@ -480,7 +480,7 @@ export function UserPositions() {
 												Price:
 											</span>
 											<span className='font-medium'>
-												{launch.tokenPrice} ETH
+												{launch.tokenPrice} GUI
 											</span>
 										</div>
 										<div className='flex justify-between text-sm'>

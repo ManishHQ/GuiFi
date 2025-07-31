@@ -131,7 +131,7 @@ export function PredictionMarket() {
 										Title *
 									</label>
 									<Input
-										placeholder='Will ETH reach $5,000 by 2025?'
+										placeholder='Will GUI reach $5,000 by 2025?'
 										value={formData.title}
 										onChange={(e) =>
 											setFormData({ ...formData, title: e.target.value })

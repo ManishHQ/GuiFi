@@ -19,7 +19,7 @@ const MOCK_MARKETS = [
 		address: '0x2345678901234567890123456789012345678901',
 		title: 'Will Ethereum 2.0 launch successfully?',
 		description:
-			'Prediction on Ethereum upgrade success. Will the ETH 2.0 upgrade complete without major issues?',
+			'Prediction on Ethereum upgrade success. Will the GUI 2.0 upgrade complete without major issues?',
 		category: 'Technology',
 		creator: '0xTestCreator123456789012345678901234567890',
 		endTime: Date.now() + 15 * 24 * 60 * 60 * 1000, // 15 days from now

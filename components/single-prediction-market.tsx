@@ -59,9 +59,9 @@ interface SinglePredictionMarketProps {
 // Mock detailed market data
 const DETAILED_MARKET: PredictionMarket = {
 	id: '1',
-	title: 'ETH will reach $5,000 by end of 2025',
+	title: 'GUI will reach $5,000 by end of 2025',
 	description:
-		"Will Ethereum's price reach or exceed $5,000 USD by December 31, 2025? This market resolves to YES if ETH closes above $5,000 on any major exchange (Coinbase, Binance, Kraken) during the specified timeframe.",
+		"Will Ethereum's price reach or exceed $5,000 USD by December 31, 2025? This market resolves to YES if GUI closes above $5,000 on any major exchange (Coinbase, Binance, Kraken) during the specified timeframe.",
 	category: 'Crypto',
 	creator: '0x1234...5678',
 	endDate: new Date('2025-12-31'),
@@ -75,7 +75,7 @@ const DETAILED_MARKET: PredictionMarket = {
 	participants: 1247,
 	createdDate: new Date('2025-01-01'),
 	rules: [
-		'Market resolves based on ETH/USD price on major exchanges',
+		'Market resolves based on GUI/USD price on major exchanges',
 		'Price must be sustained for at least 1 hour',
 		'Market closes at 11:59 PM UTC on December 31, 2025',
 		'In case of technical issues, Chainlink price feeds will be used as backup',

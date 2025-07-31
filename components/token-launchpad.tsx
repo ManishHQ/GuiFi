@@ -6,11 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useTokenLaunchpadFactory } from '@/hooks/use-token-launchpad';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTokenLaunchpadFactory } from '@/hooks/use-token-launchpad';
+import { CreateTokenModal } from './create-token-modal';
+import { TokenDetailPage } from './token-detail-page';
 
 export function TokenLaunchpad() {
 	const [selectedStatus, setSelectedStatus] = useState('all');
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+	const [selectedTokenAddress, setSelectedTokenAddress] = useState<
+		string | null
+	>(null);
 	const { launches, isLoading } = useTokenLaunchpadFactory();
 
 	const getStatusColor = (isLive: boolean, isCompleted: boolean) => {
@@ -35,6 +41,16 @@ export function TokenLaunchpad() {
 			return !launch.isLive && !launch.isCompleted;
 		return true;
 	});
+
+	// If a token is selected, show the token detail page
+	if (selectedTokenAddress) {
+		return (
+			<TokenDetailPage
+				tokenAddress={selectedTokenAddress}
+				onBack={() => setSelectedTokenAddress(null)}
+			/>
+		);
+	}
 
 	if (isLoading) {
 		return (
@@ -64,12 +80,18 @@ export function TokenLaunchpad() {
 			<div className='flex items-center justify-between'>
 				<div>
 					<h1 className='text-3xl font-bold text-slate-900 dark:text-white'>
-						Token Launchpad
+						🚀 Memecoin Launchpad
 					</h1>
 					<p className='text-slate-600 dark:text-slate-400 mt-2'>
-						Discover and invest in the next big tokens
+						Discover and launch the next viral memecoins
 					</p>
 				</div>
+				<Button
+					onClick={() => setIsCreateModalOpen(true)}
+					className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'
+				>
+					🚀 Launch Token
+				</Button>
 			</div>
 
 			{/* Demo Notice */}
@@ -79,6 +101,50 @@ export function TokenLaunchpad() {
 					demonstration purposes.
 				</AlertDescription>
 			</Alert>
+
+			{/* Stats Overview */}
+			<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+				<Card>
+					<CardContent className='p-4'>
+						<div className='text-2xl font-bold text-slate-900 dark:text-white'>
+							{launches.length}
+						</div>
+						<div className='text-sm text-slate-600 dark:text-slate-400'>
+							Total Tokens
+						</div>
+					</CardContent>
+				</Card>
+				<Card>
+					<CardContent className='p-4'>
+						<div className='text-2xl font-bold text-green-600'>
+							{launches.filter((l) => l.isLive).length}
+						</div>
+						<div className='text-sm text-slate-600 dark:text-slate-400'>
+							Live Launches
+						</div>
+					</CardContent>
+				</Card>
+				<Card>
+					<CardContent className='p-4'>
+						<div className='text-2xl font-bold text-blue-600'>
+							{launches.filter((l) => l.isCompleted).length}
+						</div>
+						<div className='text-sm text-slate-600 dark:text-slate-400'>
+							Completed
+						</div>
+					</CardContent>
+				</Card>
+				<Card>
+					<CardContent className='p-4'>
+						<div className='text-2xl font-bold text-orange-600'>
+							{launches.reduce((sum, l) => sum + l.contributorCount, 0)}
+						</div>
+						<div className='text-sm text-slate-600 dark:text-slate-400'>
+							Total Contributors
+						</div>
+					</CardContent>
+				</Card>
+			</div>
 
 			{/* Status Filter */}
 			<Tabs
@@ -105,7 +171,8 @@ export function TokenLaunchpad() {
 						{filteredLaunches.map((launch) => (
 							<Card
 								key={launch.address}
-								className='hover:shadow-lg transition-shadow'
+								className='hover:shadow-lg transition-shadow cursor-pointer'
+								onClick={() => setSelectedTokenAddress(launch.address)}
 							>
 								<CardHeader>
 									<div className='flex items-center justify-between mb-2'>
@@ -144,7 +211,7 @@ export function TokenLaunchpad() {
 												Token Price
 											</div>
 											<div className='text-lg font-bold'>
-												{parseFloat(launch.tokenPrice).toFixed(4)} ETH
+												{parseFloat(launch.tokenPrice).toFixed(4)} GUI
 											</div>
 										</div>
 										<div>
@@ -166,7 +233,7 @@ export function TokenLaunchpad() {
 												</span>
 												<span className='font-semibold'>
 													{launch.liquidityRaised} / {launch.liquidityTarget}{' '}
-													ETH
+													GUI
 												</span>
 											</div>
 											<Progress value={launch.progress} className='h-2' />
@@ -206,16 +273,15 @@ export function TokenLaunchpad() {
 									)}
 
 									{/* Action Button */}
-									{launch.isLive && (
-										<Button className='w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'>
-											🚀 Participate in Launch
-										</Button>
-									)}
-									{!launch.isLive && !launch.isCompleted && (
-										<Button variant='neutral' className='w-full'>
-											⏰ Notify Me
-										</Button>
-									)}
+									<Button
+										className='w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+										onClick={(e) => {
+											e.stopPropagation();
+											setSelectedTokenAddress(launch.address);
+										}}
+									>
+										📊 View Details
+									</Button>
 								</CardContent>
 							</Card>
 						))}
@@ -225,13 +291,28 @@ export function TokenLaunchpad() {
 						<Card className='text-center py-12'>
 							<div className='text-4xl mb-4'>🚀</div>
 							<h3 className='text-lg font-semibold mb-2'>No tokens found</h3>
-							<p className='text-slate-600 dark:text-slate-400'>
+							<p className='text-slate-600 dark:text-slate-400 mb-4'>
 								No tokens match the selected criteria.
 							</p>
+							<Button
+								onClick={() => setIsCreateModalOpen(true)}
+								className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'
+							>
+								🚀 Launch Your First Token
+							</Button>
 						</Card>
 					)}
 				</TabsContent>
 			</Tabs>
+
+			{/* Create Token Modal */}
+			<CreateTokenModal
+				isOpen={isCreateModalOpen}
+				onOpenChange={setIsCreateModalOpen}
+				onTokenCreated={(tokenAddress) => {
+					setSelectedTokenAddress(tokenAddress);
+				}}
+			/>
 		</div>
 	);
 }
