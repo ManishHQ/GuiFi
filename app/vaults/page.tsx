@@ -1,12 +1,7 @@
-import { ComingSoon } from '@/components/coming-soon';
+'use client';
+
+import { VaultPage } from '@/components/vault-page';
 
 export default function VaultsPage() {
-	return (
-		<ComingSoon
-			title='🏦 Vaults & Pools'
-			description='Advanced DeFi vaults and liquidity pools'
-			icon='🏦'
-			featureName='Vaults and Pools'
-		/>
-	);
+	return <VaultPage />;
 }
